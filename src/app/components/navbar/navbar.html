@@ -1,0 +1,109 @@
+<nav class="fixed top-0 right-0 left-0 bg-white border-b border-gray-200 h-16 flex items-center justify-between px-6 z-30">
+  <!-- Logo -->
+  <div class="flex items-center mr-8">
+    <div class="flex items-center">
+      <img src="images/Wim_Logo.png" alt="Wimera Logo" width="40" height="40" class="mr-2" /> 
+
+      <span class="text-xl font-semibold text-teal-700">Wimera SFS</span>
+    </div>
+  </div>
+
+  <!-- Navigation Menu -->
+  <div class="flex-1 flex items-center space-x-1">
+    @for (item of menuItems; track item.label) {
+      <div class="relative" (mouseleave)="closeDropdown()">
+        @if (item.children) {
+          <!-- Dropdown Menu Item -->
+          <button
+            (mouseenter)="toggleDropdown(item.label)"
+            (click)="toggleDropdown(item.label)"
+            class="flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:bg-teal-50 hover:text-teal-700 rounded-lg transition-all"
+          >
+            <span [innerHTML]="getSafeHtml(item.icon)" class="w-4 h-4 mr-2"></span>
+            <span>{{ item.label }}</span>
+            <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          
+          @if (openDropdown === item.label) {
+            <div class="absolute left-0 mt-1 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+              @for (child of item.children; track child.label) {
+                <a
+                  [routerLink]="child.route"
+                  routerLinkActive="bg-teal-50 text-teal-700 font-medium"
+                  (click)="closeDropdown()"
+                  class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 first:rounded-t-lg last:rounded-b-lg"
+                >
+                  {{ child.label }}
+                  @if (child.badge) {
+                    <span class="ml-2 text-xs bg-gray-200 text-gray-500 px-2 py-0.5 rounded">{{ child.badge }}</span>
+                  }
+                </a>
+              }
+            </div>
+          }
+        } @else {
+          <!-- Regular Menu Item -->
+          <a
+            [routerLink]="item.route"
+            routerLinkActive="bg-teal-50 text-teal-700"
+            class="flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:bg-teal-50 hover:text-teal-700 rounded-lg transition-all"
+          >
+            <span [innerHTML]="getSafeHtml(item.icon)" class="w-4 h-4 mr-2"></span>
+            <span>{{ item.label }}</span>
+          </a>
+        }
+      </div>
+    }
+  </div>
+
+  <!-- Right Side Icons -->
+  <div class="flex items-center space-x-4 ml-4">
+    <!-- Time Display -->
+    <div class="flex items-center text-sm text-gray-600">
+      <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+        <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/>
+      </svg>
+      <span class="font-medium">{{ currentTime }}</span>
+    </div>
+
+    <!-- Language -->
+    <button class="px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+      KK
+    </button>
+
+    <!-- Logout -->
+    <button 
+      (click)="logout()"
+      class="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+      title="Logout"
+    >
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+      </svg>
+    </button>
+
+    <!-- Settings -->
+    <button class="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors" title="Settings">
+      <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+        <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94L14.4 2.81c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>
+      </svg>
+    </button>
+
+    <!-- Notifications -->
+    <button class="relative p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors" title="Notifications">
+      <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+        <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/>
+      </svg>
+      <span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+    </button>
+
+    <!-- User Profile -->
+    <button class="flex items-center space-x-2 hover:bg-gray-100 rounded-lg p-1.5 transition-colors">
+      <div class="w-8 h-8 bg-gradient-to-br from-teal-400 to-teal-600 rounded-full flex items-center justify-center">
+        <span class="text-white font-semibold text-sm">KK</span>
+      </div>
+    </button>
+  </div>
+</nav>
