@@ -1,6 +1,6 @@
-import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef, PLATFORM_ID, Inject } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
-import { CommonModule } from '@angular/common';
+import { CommonModule, isPlatformBrowser, DOCUMENT } from '@angular/common';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
 interface MenuItem {
@@ -20,20 +20,33 @@ export class NavbarComponent implements OnInit, OnDestroy {
   private timeInterval: any;
   isDarkTheme = false;
   isMenuOpen = false;
+  private isBrowser: boolean;
 
   constructor(
     private router: Router, 
     private sanitizer: DomSanitizer,
-    private cdr: ChangeDetectorRef
-  ) {}
+    private cdr: ChangeDetectorRef,
+    @Inject(PLATFORM_ID) platformId: Object,
+    @Inject(DOCUMENT) private document: Document
+  ) {
+    this.isBrowser = isPlatformBrowser(platformId);
+  }
 
   ngOnInit() {
     this.updateTime();
     this.timeInterval = setInterval(() => this.updateTime(), 1000);
-    // Load theme preference
-    const savedTheme = localStorage.getItem('theme');
-    this.isDarkTheme = savedTheme === 'dark';
-    this.applyTheme();
+    // Load theme preference (only in browser)
+    if (this.isBrowser) {
+      const savedTheme = localStorage.getItem('theme');
+      if (savedTheme === 'dark' || savedTheme === 'light') {
+        this.isDarkTheme = savedTheme === 'dark';
+        this.applyTheme();
+      } else {
+        this.autoThemeCheck();
+      }
+      // Check time-based theme every minute
+      setInterval(() => this.autoThemeCheck(), 60000);
+    }
   }
 
   ngOnDestroy() {
@@ -84,11 +97,29 @@ export class NavbarComponent implements OnInit, OnDestroy {
     });
     this.cdr.detectChanges();
   }
-
+//toggle theme between dark and light mode: user explicit toggle always overrides time-based rule
   toggleTheme() {
+    if (!this.isBrowser) return;
     this.isDarkTheme = !this.isDarkTheme;
     localStorage.setItem('theme', this.isDarkTheme ? 'dark' : 'light');
     this.applyTheme();
+  }
+
+  // Automatically set theme based on time, but only change if not already matching
+  autoThemeCheck() {
+    if (!this.isBrowser) return;
+    const now = new Date();
+    const hour = now.getHours();
+    const shouldBeDark = (hour >= 18 || hour < 7);
+    if (shouldBeDark && !this.isDarkTheme) {
+      this.isDarkTheme = true;
+      localStorage.setItem('theme', 'dark');
+      this.applyTheme();
+    } else if (!shouldBeDark && this.isDarkTheme) {
+      this.isDarkTheme = false;
+      localStorage.setItem('theme', 'light');
+      this.applyTheme();
+    }
   }
 
   toggleMenu() {
@@ -100,16 +131,19 @@ export class NavbarComponent implements OnInit, OnDestroy {
   }
 
   applyTheme() {
+    if (!this.isBrowser) return;
     if (this.isDarkTheme) {
-      document.documentElement.classList.add('dark');
+      this.document.documentElement.classList.add('dark');
     } else {
-      document.documentElement.classList.remove('dark');
+      this.document.documentElement.classList.remove('dark');
     }
   }
 
   logout() {
-    localStorage.removeItem('isLoggedIn');
-    localStorage.removeItem('employeeId');
+    if (this.isBrowser) {
+      localStorage.removeItem('isLoggedIn');
+      localStorage.removeItem('employeeId');
+    }
     this.router.navigate(['/login']);
   }
 }

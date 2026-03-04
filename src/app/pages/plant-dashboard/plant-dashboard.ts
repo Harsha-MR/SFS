@@ -1,5 +1,5 @@
-import { Component, OnInit } from '@angular/core';
-import { CommonModule, DOCUMENT } from '@angular/common';
+import { Component, OnInit, PLATFORM_ID, Inject } from '@angular/core';
+import { CommonModule, DOCUMENT, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgxEchartsModule } from 'ngx-echarts';
 import { EChartsOption } from 'echarts';
@@ -39,6 +39,7 @@ interface Plant {
   performance: number;
   quality: number;
   oee: number;
+  targetOee: number;
   zones: Zone[];
 }
 
@@ -62,6 +63,16 @@ export class PlantDashboard implements OnInit {
   private document = inject(DOCUMENT);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
+  private platformId = inject(PLATFORM_ID);
+  private isBrowser: boolean;
+  
+  constructor() {
+    this.isBrowser = isPlatformBrowser(this.platformId);
+  }
+  
+  get isClient(): boolean {
+    return this.isBrowser;
+  }
   
   currentView: 'plant' | 'zone' | 'machine' = 'plant';
   selectedZone: Zone | null = null;
@@ -74,6 +85,9 @@ export class PlantDashboard implements OnInit {
   trendTooltipVisible = false;
   trendTooltipIndex = 0;
   trendTooltipLeftPercent = 50;
+  
+  // Toggle state for plant efficiency view
+  plantEfficiencyView: 'today' | 'weekly' = 'today';
 
   readonly trendChartWidth = 760;
   readonly trendChartHeight = 230;
@@ -91,10 +105,11 @@ export class PlantDashboard implements OnInit {
     currentShift: 'Shift 1',
     shiftStartTime: '06:00',
     shiftEndTime: '14:00',
-    availability: 85.5,
-    performance: 92.3,
-    quality: 96.8,
-    oee: 76.4,
+    availability: 39.5,
+    performance: 45.2,
+    quality: 78,
+    oee: 100,
+    targetOee: 85,
     zones: [
       {
         id: 1,
@@ -296,6 +311,17 @@ export class PlantDashboard implements OnInit {
   plantOeeChartOption: EChartsOption = {};
   weeklyTrendChartOption: EChartsOption = {};
   hourlyPartCountChartOption: EChartsOption = {};
+  
+  // Gauge chart options for today's efficiency
+  availabilityGaugeOption: EChartsOption = {};
+  performanceGaugeOption: EChartsOption = {};
+  qualityGaugeOption: EChartsOption = {};
+  targetOeeGaugeOption: EChartsOption = {};
+  oeeMainGaugeOption: EChartsOption = {};
+  
+  // Area chart and radar chart options for today's efficiency
+  largeAreaChartOption: EChartsOption = {};
+  metricsRadarChartOption: EChartsOption = {};
 
   ngOnInit() {
     this.initCharts();
@@ -331,6 +357,7 @@ export class PlantDashboard implements OnInit {
   }
 
   private isDarkMode(): boolean {
+    if (!this.isBrowser) return false;
     return this.document.documentElement.classList.contains('dark');
   }
 
@@ -346,6 +373,17 @@ export class PlantDashboard implements OnInit {
     this.plantOeeChartOption = this.getOeeChartOption(this.plant.oee, this.plant.availability, this.plant.performance, this.plant.quality);
     this.weeklyTrendChartOption = this.getWeeklyTrendChartOption();
     this.hourlyPartCountChartOption = this.getHourlyPartCountChartOption();
+    
+    // Initialize gauge charts for today's efficiency and change the color of lable in dark mode to light color for better visibility
+    this.availabilityGaugeOption = this.getHalfGaugeOption('Availability', this.plant.availability, );
+    this.performanceGaugeOption = this.getHalfGaugeOption('Performance', this.plant.performance, '#22c55e');
+    this.qualityGaugeOption = this.getHalfGaugeOption('Quality', this.plant.quality, '#a78bfa');
+    this.targetOeeGaugeOption = this.getHalfGaugeOption('Target OEE', this.plant.targetOee, '#f59e0b');
+    this.oeeMainGaugeOption = this.getMainGaugeOption('OEE', this.plant.oee);
+    
+    // Initialize area chart and radar chart
+    this.largeAreaChartOption = this.getLargeAreaChartOption();
+    this.metricsRadarChartOption = this.getMetricsRadarChartOption();
   }
 
   getOeeChartOption(oee: number, availability: number, performance: number, quality: number): EChartsOption {
@@ -591,6 +629,371 @@ export class PlantDashboard implements OnInit {
     };
   }
 
+  getHalfGaugeOption(name: string, value: number, color?: string): EChartsOption {
+    const isDark = this.isDarkMode();
+    const textColor = this.getTextColor();
+    // Use dynamic color logic for OEE and similar metrics
+    let gaugeColor: string;
+    if (!color || name.toLowerCase().includes('oee') || name.toLowerCase().includes('availability') || name.toLowerCase().includes('performance') || name.toLowerCase().includes('quality')) {
+      gaugeColor = this.getOeeStrokeColor(value);
+    } else {
+      gaugeColor = color;
+    }
+    // Fallback to a default color if still undefined
+    if (!gaugeColor) gaugeColor = '#3b82f6';
+    return {
+      series: [
+        {
+          type: 'gauge',
+          startAngle: 180,
+          endAngle: 0,
+          min: 0,
+          max: 100,
+          radius: '90%',
+          center: ['50%', '75%'],
+          splitNumber: 5,
+          axisLine: {
+            lineStyle: {
+              width: 20,
+              color: [
+                [value / 100, gaugeColor],
+                [1, isDark ? '#374151' : '#e5e7eb']
+              ]
+            }
+          },
+          pointer: {
+            show: false
+          },
+          axisTick: {
+            show: false
+          },
+          splitLine: {
+            show: false
+          },
+          axisLabel: {
+            show: false
+          },
+          anchor: {
+            show: false
+          },
+          title: {
+            show: true,
+            offsetCenter: [0, '20%'],
+            fontSize: 13,
+            color: isDark ? '#d1d5db' : '#4b5563',
+            fontWeight: 400
+          },
+          detail: {
+            valueAnimation: true,
+            formatter: '{value}%',
+            color: gaugeColor,
+            fontSize: 24,
+            fontWeight: 'bold',
+            offsetCenter: [0, '-10%']
+          },
+          data: [
+            {
+              value: value,
+              name: name
+            }
+          ]
+        }
+      ]
+    };
+  }
+
+  getMainGaugeOption(name: string, value: number): EChartsOption {
+    const isDark = this.isDarkMode();
+    const textColor = this.getTextColor();
+    const gaugeColor = this.getOeeStrokeColor(value);
+    
+    return {
+      series: [
+        {
+          type: 'gauge',
+          startAngle: 225,
+          endAngle: -45,
+          min: 0,
+          max: 100,
+          radius: '90%',
+          center: ['50%', '60%'],
+          splitNumber: 10,
+          axisLine: {
+            lineStyle: {
+              width: 30,
+              color: [
+                [value / 100, gaugeColor],
+                [1, isDark ? '#0e1013' : '#e5e7eb']
+              ]
+            }
+          },
+          pointer: {
+            itemStyle: {
+              color: gaugeColor
+            },
+            width: 3,
+            length: '60%'
+          },
+          axisTick: {
+            distance: -30,
+            length: 6,
+            lineStyle: {
+              color: isDark ? '#6b7280' : '#9ca3af',
+              width: 2
+            }
+          },
+          splitLine: {
+            distance: -30,
+            length: 12,
+            lineStyle: {
+              color: isDark ? '#9ca3af' : '#d1d5db',
+              width: 3
+            }
+          },
+          axisLabel: {
+            color: isDark ? '#d1d5db' : '#4b5563',
+            distance: 35,
+            fontSize: 10
+          },
+          anchor: {
+            show: true,
+            showAbove: true,
+            size: 15,
+            itemStyle: {
+              borderWidth: 5,
+              borderColor: gaugeColor
+            }
+          },
+          title: {
+            show: true,
+            offsetCenter: [0, '-15%'],
+            fontSize: 13,
+            color: isDark ? '#d1d5db' : '#4b5563',
+            fontWeight: "bold"
+          },
+          detail: {
+            valueAnimation: true,
+            formatter: '{value}%',
+            color: gaugeColor,
+            fontSize: 22,
+            fontWeight: 'bold',
+            offsetCenter: [0, '75%']
+          },
+          data: [
+            {
+              value: value,
+              name: name
+            }
+          ]
+        }
+      ]
+    };
+  }
+
+  togglePlantEfficiencyView() {
+    this.plantEfficiencyView = this.plantEfficiencyView === 'today' ? 'weekly' : 'today';
+  }
+
+  getLargeAreaChartOption(): EChartsOption {
+    const isDark = this.isDarkMode();
+    const textColor = this.getTextColor();
+    const axisLineColor = this.getAxisLineColor();
+    
+    // Generate data
+    let base = +new Date(1988, 9, 3);
+    const oneDay = 24 * 3600 * 1000;
+    const data: [number, number][] = [[base, Math.random() * 300]];
+    for (let i = 1; i < 20000; i++) {
+      const now = new Date((base += oneDay));
+      data.push([+now, Math.round((Math.random() - 0.5) * 20 + data[i - 1][1])]);
+    }
+    
+    return {
+      tooltip: {
+        trigger: 'axis',
+        position: function (pt) {
+          return [pt[0], '10%'];
+        },
+        backgroundColor: isDark ? '#1f2937' : '#ffffff',
+        borderColor: isDark ? '#4b5563' : '#e5e7eb',
+        textStyle: {
+          color: textColor
+        }
+      },
+      title: {
+        left: 'center',
+        text: 'Large Area Chart',
+        textStyle: {
+          color: textColor,
+          fontSize: 16,
+          fontWeight: 600
+        }
+      },
+      toolbox: {
+        feature: {
+          dataZoom: {
+            yAxisIndex: 'none'
+          },
+          restore: {},
+          saveAsImage: {}
+        },
+        iconStyle: {
+          borderColor: textColor
+        }
+      },
+      xAxis: {
+        type: 'time',
+        axisLine: {
+          lineStyle: {
+            color: axisLineColor
+          }
+        },
+        axisLabel: {
+          color: textColor
+        }
+      },
+      yAxis: {
+        type: 'value',
+        boundaryGap: [0, '100%'],
+        axisLine: {
+          lineStyle: {
+            color: axisLineColor
+          }
+        },
+        axisLabel: {
+          color: textColor
+        },
+        splitLine: {
+          lineStyle: {
+            color: isDark ? '#374151' : '#f3f4f6'
+          }
+        }
+      },
+      dataZoom: [
+        {
+          type: 'inside',
+          start: 0,
+          end: 20
+        },
+        {
+          start: 0,
+          end: 20,
+          textStyle: {
+            color: textColor
+          },
+          borderColor: isDark ? '#4b5563' : '#d1d5db',
+          fillerColor: isDark ? 'rgba(59, 130, 246, 0.2)' : 'rgba(59, 130, 246, 0.1)'
+        }
+      ],
+      series: [
+        {
+          name: 'Fake Data',
+          type: 'line',
+          smooth: true,
+          symbol: 'none',
+          areaStyle: {
+            color: isDark ? 'rgba(59, 130, 246, 0.3)' : 'rgba(59, 130, 246, 0.2)'
+          },
+          lineStyle: {
+            color: '#3b82f6',
+            width: 2
+          },
+          data: data
+        }
+      ]
+    };
+  }
+
+  getMetricsRadarChartOption(): EChartsOption {
+    const isDark = this.isDarkMode();
+    const textColor = this.getTextColor();
+    
+    return {
+      title: {
+        text: 'Plant Metrics',
+        left: 'center',
+        top: 10,
+        textStyle: {
+          color: textColor,
+          fontSize: 14,
+          fontWeight: 600
+        }
+      },
+      tooltip: {
+        backgroundColor: isDark ? '#1f2937' : '#ffffff',
+        borderColor: isDark ? '#4b5563' : '#e5e7eb',
+        textStyle: {
+          color: textColor
+        }
+      },
+      radar: {
+        indicator: [
+          { name: 'Availability', max: 100 },
+          { name: 'Performance', max: 100 },
+          { name: 'Quality', max: 100 },
+          { name: 'OEE', max: 100 },
+          { name: 'Target OEE', max: 100 }
+        ],
+        center: ['50%', '55%'],
+        radius: '65%',
+        axisName: {
+          color: textColor,
+          fontSize: 11,
+          fontWeight: 500
+        },
+        splitArea: {
+          areaStyle: {
+            color: isDark 
+              ? ['rgba(59, 130, 246, 0.05)', 'rgba(59, 130, 246, 0.1)', 'rgba(59, 130, 246, 0.15)', 'rgba(59, 130, 246, 0.2)']
+              : ['rgba(114, 192, 249, 0.05)', 'rgba(114, 192, 249, 0.1)', 'rgba(114, 192, 249, 0.15)', 'rgba(114, 192, 249, 0.2)']
+          }
+        },
+        axisLine: {
+          lineStyle: {
+            color: isDark ? '#4b5563' : '#d1d5db'
+          }
+        },
+        splitLine: {
+          lineStyle: {
+            color: isDark ? '#4b5563' : '#d1d5db'
+          }
+        }
+      },
+      series: [
+        {
+          type: 'radar',
+          data: [
+            {
+              value: [
+                this.plant.availability,
+                this.plant.performance,
+                this.plant.quality,
+                this.plant.oee,
+                this.plant.targetOee
+              ],
+              name: 'Current Metrics',
+              areaStyle: {
+                color: 'rgba(59, 130, 246, 0.3)'
+              },
+              lineStyle: {
+                color: '#3b82f6',
+                width: 2
+              },
+              itemStyle: {
+                color: '#3b82f6'
+              }
+            }
+          ],
+          emphasis: {
+            lineStyle: {
+              width: 3
+            }
+          }
+        }
+      ]
+    };
+  }
+
   getZoneOeeChartOption(zone: Zone): EChartsOption {
     return this.getOeeChartOption(zone.oee, zone.availability, zone.performance, zone.quality);
   }
@@ -677,25 +1080,29 @@ export class PlantDashboard implements OnInit {
 
   getOeeColor(oee: number): string {
     if (oee >= 85) return 'text-green-600 dark:text-green-400';
-    if (oee >= 70) return 'text-yellow-600 dark:text-yellow-400';
+    if (oee >= 60) return 'text-yellow-600 dark:text-yellow-400';
+    if (oee >= 40) return 'text-orange-600 dark:text-orange-400';
     return 'text-red-600 dark:text-red-400';
   }
 
   getOeeStrokeColor(oee: number): string {
     if (oee >= 85) return '#22c55e';
-    if (oee >= 70) return '#f59e0b';
+    if (oee >= 60) return '#f5d20b';
+    if (oee >= 40) return '#E67E22';
     return '#ef4444';
   }
 
   getOeeBgColor(oee: number): string {
     if (oee >= 85) return 'bg-green-500';
-    if (oee >= 70) return 'bg-yellow-500';
+    if (oee >= 60) return 'bg-yellow-500';
+    if (oee >= 40) return 'bg-orange-500';
     return 'bg-red-500';
   }
 
   getOeeTextColor(oee: number): string {
     if (oee >= 85) return 'text-green-600 dark:text-green-400';
-    if (oee >= 70) return 'text-yellow-600 dark:text-yellow-400';
+    if (oee >= 60) return 'text-yellow-600 dark:text-yellow-400';
+    if (oee >= 40) return 'text-orange-600 dark:text-orange-400';
     return 'text-red-600 dark:text-red-400';
   }
 

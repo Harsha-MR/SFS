@@ -2,12 +2,16 @@ import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/
 import { provideRouter } from '@angular/router';
 import { provideEchartsCore } from 'ngx-echarts';
 import * as echarts from 'echarts/core';
-import { BarChart, LineChart, PieChart } from 'echarts/charts';
+import { BarChart, LineChart, PieChart, GaugeChart, RadarChart } from 'echarts/charts';
 import {
   GridComponent,
   TooltipComponent,
   LegendComponent,
   TitleComponent,
+  ToolboxComponent,
+  DataZoomComponent,
+  RadarComponent,
+  TimelineComponent
 } from 'echarts/components';
 import { CanvasRenderer } from 'echarts/renderers';
 
@@ -19,10 +23,16 @@ echarts.use([
   BarChart,
   LineChart,
   PieChart,
+  GaugeChart,
+  RadarChart,
   GridComponent,
   TooltipComponent,
   LegendComponent,
   TitleComponent,
+  ToolboxComponent,
+  DataZoomComponent,
+  RadarComponent,
+  TimelineComponent,
   CanvasRenderer,
 ]);
 
