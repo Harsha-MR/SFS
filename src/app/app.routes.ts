@@ -16,6 +16,8 @@ export const routes: Routes = [
     children: [
       { path: '', redirectTo: 'plant', pathMatch: 'full' },
       { path: 'plant', component: PlantDashboard },
+      { path: 'plant/:zoneName', component: PlantDashboard },
+      { path: 'plant/:zoneName/:machineName', component: PlantDashboard },
       { path: 'analytics', component: AnalyticsComponent },
       { path: 'preventive-scheduling', component: PreventiveSchedulingComponent },
       { path: 'configuration', component: ConfigurationComponent },

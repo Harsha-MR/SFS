@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { NgxEchartsModule } from 'ngx-echarts';
 import { EChartsOption } from 'echarts';
 import { inject } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 
 interface Machine {
   id: number;
@@ -59,6 +60,9 @@ interface TrendPoint {
 })
 export class PlantDashboard implements OnInit {
   private document = inject(DOCUMENT);
+  private route = inject(ActivatedRoute);
+  private router = inject(Router);
+  
   currentView: 'plant' | 'zone' | 'machine' = 'plant';
   selectedZone: Zone | null = null;
   selectedMachine: Machine | null = null;
@@ -252,13 +256,13 @@ export class PlantDashboard implements OnInit {
   ];
 
   weeklyTrends: TrendPoint[] = [
-    { time: '24/02', availability: 80, performance: 46, quality: 20, oee: 55 },
-    { time: '25/02', availability: 60, performance: 33, quality: 100, oee: 72 },
-    { time: '26/02', availability: 72, performance: 46, quality: 100, oee: 63 },
-    { time: '27/02', availability: 76, performance: 50, quality: 100, oee: 74 },
-    { time: '28/02', availability: 70, performance: 37, quality: 90, oee: 69 },
-    { time: '01/03', availability: 58, performance: 80, quality: 80, oee: 65 },
-    { time: '02/03', availability: 52, performance: 46, quality: 80, oee: 61 },
+    { time: '24/02/2026', availability: 80, performance: 46, quality: 20, oee: 55 },
+    { time: '25/02/2026', availability: 60, performance: 33, quality: 100, oee: 72 },
+    { time: '26/02/2026', availability: 72, performance: 46, quality: 100, oee: 63 },
+    { time: '27/02/2026', availability: 76, performance: 50, quality: 100, oee: 74 },
+    { time: '28/02/2026', availability: 70, performance: 37, quality: 90, oee: 69 },
+    { time: '01/03/2026', availability: 58, performance: 80, quality: 80, oee: 65 },
+    { time: '02/03/2026', availability: 52, performance: 46, quality: 80, oee: 61 },
   ];
 
   monthlyTrends = [
@@ -295,6 +299,31 @@ export class PlantDashboard implements OnInit {
 
   ngOnInit() {
     this.initCharts();
+    
+    // Subscribe to route parameters to determine current view
+    this.route.params.subscribe(params => {
+      const zoneName = params['zoneName'];
+      const machineName = params['machineName'];
+      
+      if (machineName && zoneName) {
+        // Machine view
+        this.currentView = 'machine';
+        this.selectedZone = this.plant.zones.find(z => this.encodeRouteName(z.name) === zoneName) || null;
+        if (this.selectedZone) {
+          this.selectedMachine = this.selectedZone.machines.find(m => this.encodeRouteName(m.name) === machineName) || null;
+        }
+      } else if (zoneName) {
+        // Zone view
+        this.currentView = 'zone';
+        this.selectedZone = this.plant.zones.find(z => this.encodeRouteName(z.name) === zoneName) || null;
+        this.selectedMachine = null;
+      } else {
+        // Plant view
+        this.currentView = 'plant';
+        this.selectedZone = null;
+        this.selectedMachine = null;
+      }
+    });
   }
 
   private updateChartTheme(isDark: boolean) {
@@ -433,7 +462,7 @@ export class PlantDashboard implements OnInit {
           type: 'bar',
           data: this.weeklyTrends.map(t => t.availability),
           itemStyle: {
-            color: '#93c5fd'
+            color: '#81acdc'
           }
         },
         {
@@ -441,7 +470,7 @@ export class PlantDashboard implements OnInit {
           type: 'bar',
           data: this.weeklyTrends.map(t => t.performance),
           itemStyle: {
-            color: '#38bdf8'
+            color: '#5bf838'
           }
         },
         {
@@ -587,26 +616,33 @@ export class PlantDashboard implements OnInit {
     return this.selectedZone.machines.filter(m => m.status === this.machineStatusFilter);
   }
 
+  encodeRouteName(name: string): string {
+    return name.toLowerCase().replace(/\s+/g, '-');
+  }
+
   selectZone(zone: Zone) {
-    this.selectedZone = zone;
-    this.currentView = 'zone';
+    const zoneName = this.encodeRouteName(zone.name);
+    this.router.navigate(['/dashboard/plant', zoneName]);
     this.machineStatusFilter = 'all';
   }
 
   selectMachine(machine: Machine) {
-    this.selectedMachine = machine;
-    this.currentView = 'machine';
+    if (this.selectedZone) {
+      const zoneName = this.encodeRouteName(this.selectedZone.name);
+      const machineName = this.encodeRouteName(machine.name);
+      this.router.navigate(['/dashboard/plant', zoneName, machineName]);
+    }
   }
 
   backToPlant() {
-    this.currentView = 'plant';
-    this.selectedZone = null;
-    this.selectedMachine = null;
+    this.router.navigate(['/dashboard/plant']);
   }
 
   backToZone() {
-    this.currentView = 'zone';
-    this.selectedMachine = null;
+    if (this.selectedZone) {
+      const zoneName = this.encodeRouteName(this.selectedZone.name);
+      this.router.navigate(['/dashboard/plant', zoneName]);
+    }
   }
 
   getMachineStatusClass(status: string): string {
