@@ -88,6 +88,9 @@ export class PlantDashboard implements OnInit {
   
   // Toggle state for plant efficiency view
   plantEfficiencyView: 'today' | 'weekly' = 'today';
+  
+  // Chart type toggle for weekly trend
+  weeklyChartType: 'bar' | 'line' = 'bar';
 
   readonly trendChartWidth = 760;
   readonly trendChartHeight = 230;
@@ -362,7 +365,7 @@ export class PlantDashboard implements OnInit {
   }
 
   private getTextColor(): string {
-    return this.isDarkMode() ? '#e5e7eb' : '#374151';
+    return this.isDarkMode() ? '#ffffff' : '#374151';
   }
 
   private getAxisLineColor(): string {
@@ -451,14 +454,20 @@ export class PlantDashboard implements OnInit {
       legend: {
         data: ['Availability', 'Performance', 'Quality', 'OEE'],
         bottom: 0,
+        left: 'center',
+        orient: 'horizontal',
+        itemGap: 10,
+        itemWidth: 20,
+        itemHeight: 12,
         textStyle: {
-          color: textColor
+          color: textColor,
+          fontSize: 11
         }
       },
       grid: {
         left: '3%',
         right: '4%',
-        bottom: '12%',
+        bottom: '15%',
         top: '5%',
         containLabel: true
       },
@@ -472,7 +481,7 @@ export class PlantDashboard implements OnInit {
           }
         },
         axisLabel: {
-          color: textColor
+          color: isDark ? '#ffffff' : '#6e7480',
         }
       },
       yAxis: {
@@ -490,34 +499,43 @@ export class PlantDashboard implements OnInit {
         },
         splitLine: {
           lineStyle: {
-            color: isDark ? '#374151' : '#f3f4f6'
+            color: isDark ? '#b3aeae' : '#6e7480'
           }
         }
       },
       series: [
         {
           name: 'Availability',
-          type: 'bar',
+          type: this.weeklyChartType,
           data: this.weeklyTrends.map(t => t.availability),
           itemStyle: {
             color: '#81acdc'
-          }
+          },
+          smooth: this.weeklyChartType === 'line',
+          lineStyle: this.weeklyChartType === 'line' ? { width: 2 } : undefined,
+          symbolSize: this.weeklyChartType === 'line' ? 6 : undefined
         },
         {
           name: 'Performance',
-          type: 'bar',
+          type: this.weeklyChartType,
           data: this.weeklyTrends.map(t => t.performance),
           itemStyle: {
             color: '#5bf838'
-          }
+          },
+          smooth: this.weeklyChartType === 'line',
+          lineStyle: this.weeklyChartType === 'line' ? { width: 2 } : undefined,
+          symbolSize: this.weeklyChartType === 'line' ? 6 : undefined
         },
         {
           name: 'Quality',
-          type: 'bar',
+          type: this.weeklyChartType,
           data: this.weeklyTrends.map(t => t.quality),
           itemStyle: {
             color: '#c084fc'
-          }
+          },
+          smooth: this.weeklyChartType === 'line',
+          lineStyle: this.weeklyChartType === 'line' ? { width: 2 } : undefined,
+          symbolSize: this.weeklyChartType === 'line' ? 6 : undefined
         },
         {
           name: 'OEE',
@@ -680,7 +698,7 @@ export class PlantDashboard implements OnInit {
             show: true,
             offsetCenter: [0, '20%'],
             fontSize: 13,
-            color: isDark ? '#d1d5db' : '#4b5563',
+            color: isDark ? '#ffffff' : '#4b5563',
             fontWeight: 400
           },
           detail: {
@@ -723,7 +741,7 @@ export class PlantDashboard implements OnInit {
               width: 30,
               color: [
                 [value / 100, gaugeColor],
-                [1, isDark ? '#0e1013' : '#e5e7eb']
+                [1, isDark ? '#0e1013' : '#ffffff']
               ]
             }
           },
@@ -738,7 +756,7 @@ export class PlantDashboard implements OnInit {
             distance: -30,
             length: 6,
             lineStyle: {
-              color: isDark ? '#6b7280' : '#9ca3af',
+              color: isDark ? '#ffffff' : '#727272',
               width: 2
             }
           },
@@ -746,12 +764,12 @@ export class PlantDashboard implements OnInit {
             distance: -30,
             length: 12,
             lineStyle: {
-              color: isDark ? '#9ca3af' : '#d1d5db',
+              color: isDark ? '#ffffff' : '#727272',
               width: 3
             }
           },
           axisLabel: {
-            color: isDark ? '#d1d5db' : '#4b5563',
+            color: isDark ? '#ffffff' : '#4b5563',
             distance: 35,
             fontSize: 10
           },
@@ -766,7 +784,7 @@ export class PlantDashboard implements OnInit {
           },
           title: {
             show: true,
-            offsetCenter: [0, '-15%'],
+            offsetCenter: [0, '-20%'],
             fontSize: 13,
             color: isDark ? '#d1d5db' : '#4b5563',
             fontWeight: "bold"
@@ -792,6 +810,11 @@ export class PlantDashboard implements OnInit {
 
   togglePlantEfficiencyView() {
     this.plantEfficiencyView = this.plantEfficiencyView === 'today' ? 'weekly' : 'today';
+  }
+  
+  toggleWeeklyChartType() {
+    this.weeklyChartType = this.weeklyChartType === 'bar' ? 'line' : 'bar';
+    this.weeklyTrendChartOption = this.getWeeklyTrendChartOption();
   }
 
   getLargeAreaChartOption(): EChartsOption {

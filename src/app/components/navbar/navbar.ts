@@ -42,9 +42,13 @@ export class NavbarComponent implements OnInit, OnDestroy {
         this.isDarkTheme = savedTheme === 'dark';
         this.applyTheme();
       } else {
-        this.autoThemeCheck();
+        // No saved theme, set based on time
+        const now = new Date();
+        const hour = now.getHours();
+        this.isDarkTheme = (hour >= 18 || hour < 7);
+        this.applyTheme();
       }
-      // Check time-based theme every minute
+      // Check time-based theme every minute (for automatic switching at 7 AM and 6 PM)
       setInterval(() => this.autoThemeCheck(), 60000);
     }
   }
@@ -105,22 +109,33 @@ export class NavbarComponent implements OnInit, OnDestroy {
     this.applyTheme();
   }
 
-  // Automatically set theme based on time, but only change if not already matching
+  // Automatically set theme based on time - only at specific hours (7 AM and 6 PM)
   autoThemeCheck() {
     if (!this.isBrowser) return;
     const now = new Date();
     const hour = now.getHours();
-    const shouldBeDark = (hour >= 18 || hour < 7);
-    if (shouldBeDark && !this.isDarkTheme) {
-      this.isDarkTheme = true;
-      localStorage.setItem('theme', 'dark');
-      this.applyTheme();
-    } else if (!shouldBeDark && this.isDarkTheme) {
-      this.isDarkTheme = false;
-      localStorage.setItem('theme', 'light');
-      this.applyTheme();
+    const minute = now.getMinutes();
+    
+    // Change theme at exactly 7 AM (to light) or 6 PM (to dark) - overrides user preference
+    if (hour === 7 && minute === 0) {
+      if (this.isDarkTheme) {
+        this.isDarkTheme = false;
+        localStorage.setItem('theme', 'light');
+        this.applyTheme();
+      }
+    } else if (hour === 18 && minute === 0) {
+      if (!this.isDarkTheme) {
+        this.isDarkTheme = true;
+        localStorage.setItem('theme', 'dark');
+        this.applyTheme();
+      }
     }
   }
+
+  refreshTheme() {
+  this.toggleTheme();
+  window.location.reload();
+}
 
   toggleMenu() {
     this.isMenuOpen = !this.isMenuOpen;

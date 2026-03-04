@@ -3,30 +3,22 @@
   <!-- Plant Level View -->
   <div *ngIf="currentView === 'plant'" class=" page-transition">
     <!-- Row 1: Plant Header -->
-    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-3 md:p-4 mb-3 border border-gray-200 dark:border-gray-700">
-      <div class="flex items-center justify-between">
-        <div>
-          <h1 class="text-lg sm:text-xl font-bold text-gray-800 dark:text-white">{{ plant.name }}</h1>
-          <!-- <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Plant Level Dashboard</p> -->
-        </div>
-        
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-2 md:p-4 mb-3 border border-gray-200 dark:border-gray-700">
+      <div class="flex items-center justify-between mb-1   border-gray-200 dark:border-gray-700">
+        <h1 class="text-lg sm:text-xl font-bold text-gray-800 dark:text-white">{{ plant.name }}</h1>
+        <button 
+          (click)="togglePlantEfficiencyView()"
+          class="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-lg transition-all duration-300 
+                 bg-teal-600 hover:bg-teal-700 text-white shadow-sm hover:shadow-md
+                 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 max-w-[180px] sm:max-w-none">
+          <span class="whitespace-normal leading-tight">{{ plantEfficiencyView === 'today' ? 'View Weekly Trend' : 'View Today\'s Efficiency' }}</span>
+        </button>
+        <!-- <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Plant Level Dashboard</p> -->
       </div>
     </div>
 
     <!-- Row 2: Plant's Efficiency (Toggle between Today's Efficiency and Weekly Trend) -->
-     <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-3 md:p-4 mb-3 border border-gray-200 dark:border-gray-700">
-       <!-- Header with Toggle -->
-       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 pb-3 border-b border-gray-200 dark:border-gray-700">
-         <h2 class="text-sm sm:text-base font-semibold text-gray-800 dark:text-white">Plant's Efficiency</h2>
-         <button 
-           (click)="togglePlantEfficiencyView()"
-           class="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-lg transition-all duration-300 
-                  bg-teal-600 hover:bg-teal-700 text-white shadow-sm hover:shadow-md
-                  focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 w-full sm:w-auto">
-           {{ plantEfficiencyView === 'today' ? 'View Weekly Trend' : 'View Today\'s Efficiency' }}
-         </button>
-       </div>
-       
+     <div class=" md:mb-3 ">
        <!-- Content Container with Transition -->
        <div class="relative overflow-hidden">
          <!-- Today's Efficiency View (Gauges + Area Chart + Radar) -->
@@ -43,7 +35,7 @@
              <div class="flex flex-col gap-3 md:gap-4">
                <!-- Gauges Card -->
                <div class="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-3 md:p-4 h-full overflow-hidden">
-                 <h3 class="text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 md:mb-3">Today's Performance Metrics</h3>
+                 <h3 class="text-xs sm:text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 md:mb-3">Today's Performance Metrics</h3>
                  
                  <!-- Gauge Charts for Desktop and Above (lg:1024px+) -->
                  <div class="hidden lg:grid lg:grid-cols-5 gap-3 h-[200px]">
@@ -143,59 +135,37 @@
              'opacity-100 translate-x-0': plantEfficiencyView === 'weekly',
              'opacity-0 translate-x-full absolute inset-0': plantEfficiencyView === 'today'
            }">
-           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mb-3">
-             <!-- OEE Donut Chart -->
-             <div class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden md:col-span-2 lg:col-span-1 min-h-[260px] border border-gray-200 dark:border-gray-700">
-               <div class="bg-gray-50 dark:bg-gray-700 px-3 py-2 border-b dark:border-gray-600">
-                 <h2 class="text-sm font-semibold text-gray-700 dark:text-gray-300">Today's OEE</h2>
-               </div>
-               <div class="p-4">
-                 <div class="grid grid-cols-[50fr_50fr] gap-4 items-center">
-                   <!-- Left: APQ Metrics (50%) -->
-                   <div class="space-y-2">
-                     <div class="flex items-center justify-between">
-                       <div class="flex items-center gap-2">
-                         <div class="w-3 h-3 rounded-full bg-blue-500"></div>
-                         <span class="text-sm text-gray-600 dark:text-gray-200">Availability</span>
-                       </div>
-                       <span class="text-sm font-semibold text-gray-800 dark:text-white">{{ plant.availability }}%</span>
-                     </div>
-                     <div class="flex items-center justify-between">
-                       <div class="flex items-center gap-2">
-                         <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
-                         <span class="text-sm text-gray-600 dark:text-gray-200">Performance</span>
-                       </div>
-                       <span class="text-sm font-semibold text-gray-800 dark:text-white">{{ plant.performance }}%</span>
-                     </div>
-                     <div class="flex items-center justify-between">
-                       <div class="flex items-center gap-2">
-                         <div class="w-3 h-3 rounded-full bg-green-500"></div>
-                         <span class="text-sm text-gray-600 dark:text-gray-200">Quality</span>
-                       </div>
-                       <span class="text-sm font-semibold text-gray-800 dark:text-white">{{ plant.quality }}%</span>
-                     </div>
-                   </div>
-                   
-                   <!-- Right: OEE Donut Chart (50%) - Desktop only -->
-                   <div class="hidden md:flex items-center justify-center h-[110px]">
-                     <div *ngIf="isClient" echarts [options]="plantOeeChartOption" class="w-full h-full"></div>
-                   </div>
-                   
-                   <!-- OEE Text for Mobile -->
-                   <div class="md:hidden flex items-center justify-center">
-                     <div class="text-center">
-                       <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">OEE</div>
-                       <div class="text-4xl font-bold" [ngClass]="getOeeColor(plant.oee)">{{ plant.oee }}%</div>
-                     </div>
-                   </div>
-                 </div>
-               </div>
-             </div>
-       
+           <div class="gap-3 mb-3">
              <!-- Weekly Trend Chart -->
              <div class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden md:col-span-2 lg:col-span-2 min-h-[260px] border border-gray-200 dark:border-gray-700">
-               <div class="bg-gray-50 dark:bg-gray-700 px-3 py-2 border-b dark:border-gray-600">
-                 <h2 class="text-sm font-semibold text-gray-700 dark:text-gray-300">Performance Trend (Last 7 Days)</h2>
+               <div class="bg-gray-50 dark:bg-gray-700 px-3 py-2 border-b dark:border-gray-600 flex items-center justify-between">
+                 <h2 class="text-sm font-bold text-gray-700 dark:text-gray-300">Performance Trend (Last 7 Days)</h2>
+                 <div class="flex gap-1">
+                   <button 
+                     (click)="toggleWeeklyChartType()"
+                     [class.bg-teal-100]="weeklyChartType === 'bar'"
+                     [class.dark:bg-teal-900]="weeklyChartType === 'bar'"
+                     [class.text-teal-600]="weeklyChartType === 'bar'"
+                     [class.dark:text-teal-400]="weeklyChartType === 'bar'"
+                     class="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                     title="Bar Chart">
+                     <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                       <path d="M4 20h4V10H4v10zm6 0h4V4h-4v16zm6 0h4v-7h-4v7z"/>
+                     </svg>
+                   </button>
+                   <button 
+                     (click)="toggleWeeklyChartType()"
+                     [class.bg-teal-100]="weeklyChartType === 'line'"
+                     [class.dark:bg-teal-900]="weeklyChartType === 'line'"
+                     [class.text-teal-600]="weeklyChartType === 'line'"
+                     [class.dark:text-teal-400]="weeklyChartType === 'line'"
+                     class="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                     title="Line Chart">
+                     <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                       <path d="M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 16.99z"/>
+                     </svg>
+                   </button>
+                 </div>
                </div>
                <div class="p-4">
                  <div class="h-[220px]">
@@ -209,8 +179,8 @@
      </div>
 
     <!-- Row 3: Zones -->
-    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-3 md:p-4 mb-3 border border-gray-200 dark:border-gray-700">
-      <h2 class="text-xs sm:text-sm font-semibold text-gray-800 dark:text-white mb-2">Zones ({{ plant.zones.length }})</h2>
+    <div class="md:mb-3">
+      <h2 class="text-xs sm:text-sm font-bold text-gray-800 dark:text-white mb-2 pl-4">Zones ({{ plant.zones.length }})</h2>
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
            <div *ngFor="let zone of plant.zones" 
              (click)="selectZone(zone)"

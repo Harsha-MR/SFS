@@ -53,7 +53,7 @@ app.use((req, res, next) => {
  */
 if (isMainModule(import.meta.url) || process.env['pm_id']) {
   const port = process.env['PORT'] || 4000;
-  app.listen('0.0.0.0', (error) => {
+  app.listen(port, (error) => {
     if (error) {
       throw error;
     }

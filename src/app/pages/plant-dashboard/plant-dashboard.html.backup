@@ -515,3 +515,52 @@
   </div>
 
 </div>
+
+
+<!-- OEE Donut Chart -->
+             <div class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden md:col-span-2 lg:col-span-1 min-h-[260px] border border-gray-200 dark:border-gray-700">
+               <div class="bg-gray-50 dark:bg-gray-700 px-3 py-2 border-b dark:border-gray-600">
+                 <h2 class="text-sm font-semibold text-gray-700 dark:text-gray-300">Today's OEE</h2>
+               </div>
+               <div class="p-4">
+                 <div class="grid grid-cols-[50fr_50fr] gap-4 items-center">
+                   <!-- Left: APQ Metrics (50%) -->
+                   <div class="space-y-2">
+                     <div class="flex items-center justify-between">
+                       <div class="flex items-center gap-2">
+                         <div class="w-3 h-3 rounded-full bg-blue-500"></div>
+                         <span class="text-sm text-gray-600 dark:text-gray-200">Availability</span>
+                       </div>
+                       <span class="text-sm font-semibold text-gray-800 dark:text-white">{{ plant.availability }}%</span>
+                     </div>
+                     <div class="flex items-center justify-between">
+                       <div class="flex items-center gap-2">
+                         <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                         <span class="text-sm text-gray-600 dark:text-gray-200">Performance</span>
+                       </div>
+                       <span class="text-sm font-semibold text-gray-800 dark:text-white">{{ plant.performance }}%</span>
+                     </div>
+                     <div class="flex items-center justify-between">
+                       <div class="flex items-center gap-2">
+                         <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                         <span class="text-sm text-gray-600 dark:text-gray-200">Quality</span>
+                       </div>
+                       <span class="text-sm font-semibold text-gray-800 dark:text-white">{{ plant.quality }}%</span>
+                     </div>
+                   </div>
+                   
+                   <!-- Right: OEE Donut Chart (50%) - Desktop only -->
+                   <div class="hidden md:flex items-center justify-center h-[110px]">
+                     <div *ngIf="isClient" echarts [options]="plantOeeChartOption" class="w-full h-full"></div>
+                   </div>
+                   
+                   <!-- OEE Text for Mobile -->
+                   <div class="md:hidden flex items-center justify-center">
+                     <div class="text-center">
+                       <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">OEE</div>
+                       <div class="text-4xl font-bold" [ngClass]="getOeeColor(plant.oee)">{{ plant.oee }}%</div>
+                     </div>
+                   </div>
+                 </div>
+               </div>
+             </div>
