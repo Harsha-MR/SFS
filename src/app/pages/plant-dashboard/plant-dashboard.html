@@ -1,0 +1,549 @@
+<div class="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
+  
+  <!-- Plant Level View -->
+  <div *ngIf="currentView === 'plant'" class=" page-transition">
+    <!-- Row 1: Plant Header -->
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-2 md:p-4 mb-3 border border-gray-200 dark:border-gray-700">
+      <div class="flex items-center justify-between mb-1   border-gray-200 dark:border-gray-700">
+        <h1 class="text-lg sm:text-xl font-bold text-gray-800 dark:text-white">{{ plant.name }}</h1>
+        <button 
+          (click)="togglePlantEfficiencyView()"
+          class="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-lg transition-all duration-300 
+                 bg-teal-600 hover:bg-teal-700 text-white shadow-sm hover:shadow-md
+                 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 max-w-[180px] sm:max-w-none">
+          <span class="whitespace-normal leading-tight">{{ plantEfficiencyView === 'today' ? 'View Weekly Trend' : 'View Today\'s Efficiency' }}</span>
+        </button>
+        <!-- <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Plant Level Dashboard</p> -->
+      </div>
+    </div>
+
+    <!-- Row 2: Plant's Efficiency (Toggle between Today's Efficiency and Weekly Trend) -->
+     <div class=" md:mb-3 ">
+       <!-- Content Container with Transition -->
+       <div class="relative overflow-hidden">
+         <!-- Today's Efficiency View (Gauges + Area Chart + Radar) -->
+         <div 
+           class="transition-all duration-500 ease-in-out"
+           [ngClass]="{
+             'opacity-100 translate-x-0': plantEfficiencyView === 'today',
+             'opacity-0 -translate-x-full absolute inset-0': plantEfficiencyView === 'weekly'
+           }">
+           <!-- 80-20 Grid Layout - Responsive across devices -->
+           <!-- Desktop/Laptop: 80-20, Tablet: stacked, Mobile: single column -->
+           <div class="grid grid-cols-1 lg:grid-cols-[75fr_25fr] xl:grid-cols-[80fr_20fr] gap-3 md:gap-4 min-h-[280px] md:h-auto lg:h-[280px]">
+             <!-- Left Column (80%) - Gauges and Area Chart -->
+             <div class="flex flex-col gap-3 md:gap-4">
+               <!-- Gauges Card -->
+               <div class="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-3 md:p-4 h-full overflow-hidden">
+                 <h3 class="text-xs sm:text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 md:mb-3">Today's Performance Metrics</h3>
+                 
+                 <!-- Gauge Charts for Desktop and Above (lg:1024px+) -->
+                 <div class="hidden lg:grid lg:grid-cols-5 gap-3 h-[200px]">
+                   <!-- Availability Half Gauge -->
+                   <div class="flex items-center justify-center min-h-0">
+                     <div *ngIf="isClient" echarts [options]="availabilityGaugeOption" class="w-full h-full"></div>
+                   </div>
+                   
+                   <!-- Performance Half Gauge -->
+                   <div class="flex items-center justify-center min-h-0">
+                     <div *ngIf="isClient" echarts [options]="performanceGaugeOption" class="w-full h-full"></div>
+                   </div>
+                   
+                   <!-- Center: Main OEE Gauge -->
+                   <div class="flex items-center justify-center min-h-0">
+                     <div *ngIf="isClient" echarts [options]="oeeMainGaugeOption" class="w-full h-full"></div>
+                   </div>
+                   
+                   <!-- Quality Half Gauge -->
+                   <div class="flex items-center justify-center min-h-0">
+                     <div *ngIf="isClient" echarts [options]="qualityGaugeOption" class="w-full h-full"></div>
+                   </div>
+                   
+                   <!-- Target OEE Half Gauge -->
+                   <div class="flex items-center justify-center min-h-0">
+                     <div *ngIf="isClient" echarts [options]="targetOeeGaugeOption" class="w-full h-full"></div>
+                   </div>
+                 </div>
+                 
+                 <!-- Text View for Tablet and Mobile (below lg:1024px) -->
+                 <div class="lg:hidden space-y-3">
+                   <!-- Other Metrics Grid -->
+                   <div class="grid grid-cols-2 gap-2 sm:gap-3">
+                     <!-- OEE -->
+                     <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 text-center border border-gray-200 dark:border-gray-600">
+                       <div class="flex items-center justify-center gap-1.5 mb-2">
+                         <div class="w-2.5 h-2.5 rounded-full bg-teal-500"></div>
+                         <div class="text-xs font-medium text-gray-600 dark:text-gray-300">OEE</div>
+                       </div>
+                       <div class="text-2xl sm:text-3xl font-bold" [ngClass]="getOeeColor(plant.oee)">{{ plant.oee }}%</div>
+                     </div>
+                     
+                     <!-- Availability -->
+                     <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 text-center border border-gray-200 dark:border-gray-600">
+                       <div class="flex items-center justify-center gap-1.5 mb-2">
+                         <div class="w-2.5 h-2.5 rounded-full" [ngClass]="plant.availability >= 85 ? 'bg-green-500' : plant.availability >= 60 ? 'bg-yellow-500' : 'bg-red-500'"></div>
+                         <div class="text-xs font-medium text-gray-600 dark:text-gray-300">Availability</div>
+                       </div>
+                       <div class="text-2xl sm:text-3xl font-bold" [ngClass]="getOeeColor(plant.availability)">{{ plant.availability }}%</div>
+                     </div>
+                     
+                     <!-- Performance -->
+                     <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 text-center border border-gray-200 dark:border-gray-600">
+                       <div class="flex items-center justify-center gap-1.5 mb-2">
+                         <div class="w-2.5 h-2.5 rounded-full" [ngClass]="plant.performance >= 85 ? 'bg-green-500' : plant.performance >= 60 ? 'bg-yellow-500' : 'bg-red-500'"></div>
+                         <div class="text-xs font-medium text-gray-600 dark:text-gray-300">Performance</div>
+                       </div>
+                       <div class="text-2xl sm:text-3xl font-bold" [ngClass]="getOeeColor(plant.performance)">{{ plant.performance }}%</div>
+                     </div>
+                     
+                     <!-- Quality -->
+                     <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 text-center border border-gray-200 dark:border-gray-600">
+                       <div class="flex items-center justify-center gap-1.5 mb-2">
+                         <div class="w-2.5 h-2.5 rounded-full" [ngClass]="plant.quality >= 85 ? 'bg-green-500' : plant.quality >= 60 ? 'bg-yellow-500' : 'bg-red-500'"></div>
+                         <div class="text-xs font-medium text-gray-600 dark:text-gray-300">Quality</div>
+                       </div>
+                       <div class="text-2xl sm:text-3xl font-bold" [ngClass]="getOeeColor(plant.quality)">{{ plant.quality }}%</div>
+                     </div>
+                     
+                     <!-- Target OEE -->
+                     <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 text-center border border-gray-200 dark:border-gray-600">
+                       <div class="flex items-center justify-center gap-1.5 mb-2">
+                         <div class="w-2.5 h-2.5 rounded-full bg-amber-500"></div>
+                         <div class="text-xs font-medium text-gray-600 dark:text-gray-300">Target OEE</div>
+                       </div>
+                       <div class="text-2xl sm:text-3xl font-bold text-amber-600 dark:text-amber-400">{{ plant.targetOee }}%</div>
+                     </div>
+                   </div>
+                 </div>
+               </div>
+             </div>
+             
+             <!-- Right Column (20%) - Radar Chart (Hidden on mobile, shown on tablet+) -->
+             <div class="hidden lg:block bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-3 md:p-4">
+               <div class="flex items-center justify-center h-full min-h-[240px]">
+                 <!-- <div *ngIf="isClient" echarts [options]="metricsRadarChartOption" class="w-full h-full"></div> -->
+                 <div class="text-gray-400 dark:text-gray-500 text-sm text-center">Radar Chart</div>
+               </div>
+             </div>
+           </div>
+         </div>
+         
+         <!-- Weekly Trend View -->
+         <div 
+           class="transition-all duration-500 ease-in-out"
+           [ngClass]="{
+             'opacity-100 translate-x-0': plantEfficiencyView === 'weekly',
+             'opacity-0 translate-x-full absolute inset-0': plantEfficiencyView === 'today'
+           }">
+           <div class="gap-3 mb-3">
+             <!-- Weekly Trend Chart -->
+             <div class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden md:col-span-2 lg:col-span-2 min-h-[260px] border border-gray-200 dark:border-gray-700">
+               <div class="bg-gray-50 dark:bg-gray-700 px-3 py-2 border-b dark:border-gray-600 flex items-center justify-between">
+                 <h2 class="text-sm font-bold text-gray-700 dark:text-gray-300">Performance Trend (Last 7 Days)</h2>
+                 <div class="flex gap-1">
+                   <button 
+                     (click)="toggleWeeklyChartType()"
+                     [class.bg-teal-100]="weeklyChartType === 'bar'"
+                     [class.dark:bg-teal-900]="weeklyChartType === 'bar'"
+                     [class.text-teal-600]="weeklyChartType === 'bar'"
+                     [class.dark:text-teal-400]="weeklyChartType === 'bar'"
+                     class="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                     title="Bar Chart">
+                     <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                       <path d="M4 20h4V10H4v10zm6 0h4V4h-4v16zm6 0h4v-7h-4v7z"/>
+                     </svg>
+                   </button>
+                   <button 
+                     (click)="toggleWeeklyChartType()"
+                     [class.bg-teal-100]="weeklyChartType === 'line'"
+                     [class.dark:bg-teal-900]="weeklyChartType === 'line'"
+                     [class.text-teal-600]="weeklyChartType === 'line'"
+                     [class.dark:text-teal-400]="weeklyChartType === 'line'"
+                     class="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                     title="Line Chart">
+                     <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                       <path d="M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 16.99z"/>
+                     </svg>
+                   </button>
+                 </div>
+               </div>
+               <div class="p-4">
+                 <div class="h-[220px]">
+                   <div *ngIf="isClient" echarts [options]="weeklyTrendChartOption" class="w-full h-full"></div>
+                 </div>
+               </div>
+             </div>
+           </div>
+         </div>
+       </div>
+     </div>
+
+    <!-- Row 3: Zones -->
+    <div class="md:mb-3">
+      <h2 class="text-xs sm:text-sm font-bold text-gray-800 dark:text-white mb-2 pl-4">Zones ({{ plant.zones.length }})</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+           <div *ngFor="let zone of plant.zones" 
+             (click)="selectZone(zone)"
+             class="bg-white dark:bg-gray-800 rounded-lg shadow cursor-pointer hover:shadow-lg transition-shadow border border-gray-200 dark:border-gray-700">
+          <!-- Zone Header -->
+          <div class="bg-gray-50 dark:bg-gray-700 px-3 py-2 rounded-t-lg border-b dark:border-gray-600">
+            <div class="flex items-center justify-between">
+              <h3 class="text-sm font-semibold text-gray-800 dark:text-white">{{ zone.name }}</h3>
+              <span class="px-2 py-0.5 text-xs rounded" 
+                    [ngClass]="getZoneStatusClass(zone.activeMachines, zone.totalMachines)">
+                {{ getZoneStatus(zone.activeMachines, zone.totalMachines) }}
+              </span>
+            </div>
+            <p class="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
+              <span class="font-semibold text-teal-600 dark:text-teal-400">{{ zone.activeMachines }}</span> / {{ zone.totalMachines }} machines active
+            </p>
+          </div>
+          
+          <!-- Zone Body -->
+          <div class="p-3 sm:p-4">
+            <div class="grid grid-cols-1 sm:grid-cols-[50fr_50fr] gap-3 sm:gap-4 items-center">
+              <!-- Left: APQ Metrics (50%) -->
+              <div class="space-y-1.5">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <div class="w-2.5 h-2.5 rounded-full bg-blue-500"></div>
+                    <span class="text-xs text-gray-600 dark:text-gray-400">Availability</span>
+                  </div>
+                  <span class="text-sm font-semibold text-gray-800 dark:text-white">{{ zone.availability }}%</span>
+                </div>
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <div class="w-2.5 h-2.5 rounded-full bg-yellow-500"></div>
+                    <span class="text-xs text-gray-600 dark:text-gray-400">Performance</span>
+                  </div>
+                  <span class="text-sm font-semibold text-gray-800 dark:text-white">{{ zone.performance }}%</span>
+                </div>
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <div class="w-2.5 h-2.5 rounded-full bg-green-500"></div>
+                    <span class="text-xs text-gray-600 dark:text-gray-400">Quality</span>
+                  </div>
+                  <span class="text-sm font-semibold text-gray-800 dark:text-white">{{ zone.quality }}%</span>
+                </div>
+              </div>
+              
+              <!-- Right: OEE Donut (50%) - Tablet and above -->
+              <div class="hidden sm:flex justify-center h-[120px]">
+                <div *ngIf="isClient" echarts [options]="getZoneOeeChartOption(zone)" class="w-full h-full"></div>
+              </div>
+              
+              <!-- OEE Text for Mobile -->
+              <div class="sm:hidden flex justify-center items-center">
+                <div class="text-center">
+                  <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">OEE</div>
+                  <div class="text-3xl font-bold" [ngClass]="getOeeColor(zone.oee)">{{ zone.oee }}%</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Zone Level View -->
+  <div *ngIf="currentView === 'zone' && selectedZone" class="p-4 page-transition">
+    <!-- Breadcrumb -->
+    <div class="mb-3">
+      <button (click)="backToPlant()" class="flex items-center gap-2 text-teal-600 dark:text-teal-400 hover:text-teal-700 dark:hover:text-teal-300 transition-colors text-sm">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+        </svg>
+        <span class="font-medium">Back to Plant</span>
+      </button>
+    </div>
+
+    <!-- Zone Header -->
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 mb-3 border border-gray-200 dark:border-gray-700">
+      <h1 class="text-xl font-bold text-gray-800 dark:text-white">{{ selectedZone.name }}</h1>
+      <p class="text-xs text-gray-600 dark:text-gray-300 mt-0.5">Zone Level Dashboard</p>
+    </div>
+
+    <!-- Zone APQ & OEE Cards -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 mb-3">
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-2.5 sm:p-3 border border-gray-200 dark:border-gray-700">
+        <h3 class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Availability</h3>
+        <p class="text-xl sm:text-2xl font-bold text-blue-600 dark:text-blue-400">{{ selectedZone.availability }}%</p>
+      </div>
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-2.5 sm:p-3 border border-gray-200 dark:border-gray-700">
+        <h3 class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Performance</h3>
+        <p class="text-xl sm:text-2xl font-bold text-green-600 dark:text-green-400">{{ selectedZone.performance }}%</p>
+      </div>
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-2.5 sm:p-3 border border-gray-200 dark:border-gray-700">
+        <h3 class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Quality</h3>
+        <p class="text-xl sm:text-2xl font-bold text-purple-600 dark:text-purple-400">{{ selectedZone.quality }}%</p>
+      </div>
+      <div class="bg-gradient-to-br from-teal-500 to-teal-600 rounded-lg shadow p-2.5 sm:p-3 border border-teal-400 dark:border-teal-700">
+        <h3 class="text-xs font-medium text-white mb-1">OEE</h3>
+        <p class="text-xl sm:text-2xl font-bold text-white">{{ selectedZone.oee }}%</p>
+      </div>
+    </div>
+
+    <!-- Machine Status Filter -->
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-2 sm:p-3 mb-3 border border-gray-200 dark:border-gray-700">
+      <div class="flex flex-col sm:flex-row sm:items-center gap-2">
+        <label class="text-xs font-medium text-gray-700 dark:text-gray-300">Filter by Status:</label>
+        <div class="flex flex-wrap gap-1.5 sm:gap-2">
+          <button 
+            (click)="machineStatusFilter = 'all'" 
+            [class.bg-teal-600]="machineStatusFilter === 'all'"
+            [class.text-white]="machineStatusFilter === 'all'"
+            [class.bg-gray-200]="machineStatusFilter !== 'all'"
+            [class.dark:bg-gray-700]="machineStatusFilter !== 'all'"
+            [class.text-gray-700]="machineStatusFilter !== 'all'"
+            [class.dark:text-gray-300]="machineStatusFilter !== 'all'"
+            class="px-2 py-1 text-xs rounded transition-colors">
+            All
+          </button>
+          <button 
+            (click)="machineStatusFilter = 'running'" 
+            [class.bg-green-600]="machineStatusFilter === 'running'"
+            [class.text-white]="machineStatusFilter === 'running'"
+            [class.bg-gray-200]="machineStatusFilter !== 'running'"
+            [class.dark:bg-gray-700]="machineStatusFilter !== 'running'"
+            [class.text-gray-700]="machineStatusFilter !== 'running'"
+            [class.dark:text-gray-300]="machineStatusFilter !== 'running'"
+            class="px-2 py-1 text-xs rounded transition-colors">
+            Running
+          </button>
+          <button 
+            (click)="machineStatusFilter = 'idle'" 
+            [class.bg-yellow-600]="machineStatusFilter === 'idle'"
+            [class.text-white]="machineStatusFilter === 'idle'"
+            [class.bg-gray-200]="machineStatusFilter !== 'idle'"
+            [class.dark:bg-gray-700]="machineStatusFilter !== 'idle'"
+            [class.text-gray-700]="machineStatusFilter !== 'idle'"
+            [class.dark:text-gray-300]="machineStatusFilter !== 'idle'"
+            class="px-2 py-1 text-xs rounded transition-colors">
+            Idle
+          </button>
+          <button 
+            (click)="machineStatusFilter = 'offline'" 
+            [class.bg-gray-600]="machineStatusFilter === 'offline'"
+            [class.text-white]="machineStatusFilter === 'offline'"
+            [class.bg-gray-200]="machineStatusFilter !== 'offline'"
+            [class.dark:bg-gray-700]="machineStatusFilter !== 'offline'"
+            [class.text-gray-700]="machineStatusFilter !== 'offline'"
+            [class.dark:text-gray-300]="machineStatusFilter !== 'offline'"
+            class="px-2 py-1 text-xs rounded transition-colors">
+            Offline
+          </button>
+          <button 
+            (click)="machineStatusFilter = 'maintenance'" 
+            [class.bg-red-600]="machineStatusFilter === 'maintenance'"
+            [class.text-white]="machineStatusFilter === 'maintenance'"
+            [class.bg-gray-200]="machineStatusFilter !== 'maintenance'"
+            [class.dark:bg-gray-700]="machineStatusFilter !== 'maintenance'"
+            [class.text-gray-700]="machineStatusFilter !== 'maintenance'"
+            [class.dark:text-gray-300]="machineStatusFilter !== 'maintenance'"
+            class="px-2 py-1 text-xs rounded transition-colors">
+            Maintenance
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Machines Grid -->
+    <div>
+      <h2 class="text-xs sm:text-sm font-semibold text-gray-800 dark:text-white mb-2">Machines ({{ filteredMachines.length }})</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-2 sm:gap-3">
+        <div *ngFor="let machine of filteredMachines" 
+             (click)="selectMachine(machine)"
+             class="bg-white dark:bg-gray-800 rounded-lg shadow p-2.5 sm:p-3 cursor-pointer hover:shadow-lg transition-all transform hover:scale-105 border-2"
+             [ngClass]="getMachineStatusClass(machine.status)">
+          <div class="flex items-center justify-between mb-2">
+            <h3 class="text-sm font-semibold text-gray-800 dark:text-white">{{ machine.name }}</h3>
+            <span class="text-xl">{{ getMachineStatusIcon(machine.status) }}</span>
+          </div>
+          
+          <div class="mb-2">
+            <span class="text-xs font-semibold uppercase tracking-wide">{{ machine.status }}</span>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2 mb-2 text-sm">
+            <div>
+              <p class="text-xs text-gray-600 dark:text-gray-400">Availabity: {{ machine.availability }}%</p>
+            </div>
+            <div>
+              <p class="text-xs text-gray-600 dark:text-gray-400">Performance: {{ machine.performance }}%</p>
+            </div>
+            <div>
+              <p class="text-xs text-gray-600 dark:text-gray-400">Quality: {{ machine.quality }}%</p>
+            </div>
+            <div>
+              <p class="text-xs font-semibold" [ngClass]="getOeeColor(machine.oee)">OEE: {{ machine.oee }}%</p>
+            </div>
+          </div>
+
+          <div class="pt-2 border-t border-gray-200 dark:border-gray-700">
+            <div class="flex justify-between text-xs mb-1">
+              <span class="text-gray-600 dark:text-gray-400">Parts</span>
+              <span class="font-semibold text-gray-800 dark:text-white">{{ machine.currentParts }} / {{ machine.targetParts }}</span>
+            </div>
+            <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
+              <div class="bg-teal-500 h-1.5 rounded-full transition-all duration-300" 
+                   [style.width.%]="(machine.currentParts / machine.targetParts) * 100"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Machine Level View -->
+  <div *ngIf="currentView === 'machine' && selectedMachine" class="p-4 page-transition">
+    <!-- Breadcrumb -->
+    <div class="mb-3">
+      <div class="flex items-center gap-2 text-xs">
+        <button (click)="backToPlant()" class="text-teal-600 dark:text-teal-400 hover:text-teal-700 dark:hover:text-teal-300">
+          Plant
+        </button>
+        <span class="text-gray-400">/</span>
+        <button (click)="backToZone()" class="text-teal-600 dark:text-teal-400 hover:text-teal-700 dark:hover:text-teal-300">
+          {{ selectedZone?.name }}
+        </button>
+        <span class="text-gray-400">/</span>
+        <span class="text-gray-600 dark:text-gray-300 font-medium">{{ selectedMachine.name }}</span>
+      </div>
+    </div>
+
+    <!-- Machine Header -->
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 mb-3 border border-gray-200 dark:border-gray-700">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+        <div>
+          <h1 class="text-xl font-bold text-gray-800 dark:text-white mb-1">{{ selectedMachine.name }}</h1>
+          <div class="flex items-center gap-2">
+            <span class="px-2 py-0.5 rounded-full text-xs font-semibold" [ngClass]="getMachineStatusClass(selectedMachine.status)">
+              {{ selectedMachine.status | uppercase }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Machine Metrics -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 mb-3">
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-2.5 sm:p-3 border border-gray-200 dark:border-gray-700">
+        <h3 class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Availability</h3>
+        <p class="text-xl sm:text-2xl font-bold text-blue-600 dark:text-blue-400">{{ selectedMachine.availability }}%</p>
+        <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 mt-2">
+          <div class="bg-blue-500 h-1.5 rounded-full" [style.width.%]="selectedMachine.availability"></div>
+        </div>
+      </div>
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-2.5 sm:p-3 border border-gray-200 dark:border-gray-700">
+        <h3 class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Performance</h3>
+        <p class="text-xl sm:text-2xl font-bold text-green-600 dark:text-green-400">{{ selectedMachine.performance }}%</p>
+        <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 mt-2">
+          <div class="bg-green-500 h-1.5 rounded-full" [style.width.%]="selectedMachine.performance"></div>
+        </div>
+      </div>
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-2.5 sm:p-3 border border-gray-200 dark:border-gray-700">
+        <h3 class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Quality</h3>
+        <p class="text-xl sm:text-2xl font-bold text-purple-600 dark:text-purple-400">{{ selectedMachine.quality }}%</p>
+        <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 mt-2">
+          <div class="bg-purple-500 h-1.5 rounded-full" [style.width.%]="selectedMachine.quality"></div>
+        </div>
+      </div>
+      <div class="bg-gradient-to-br from-teal-500 to-teal-600 rounded-lg shadow p-2.5 sm:p-3 border border-teal-400 dark:border-teal-700">
+        <h3 class="text-xs font-medium text-white mb-1">OEE</h3>
+        <p class="text-xl sm:text-2xl font-bold text-white">{{ selectedMachine.oee }}%</p>
+        <div class="w-full bg-white bg-opacity-30 rounded-full h-1.5 mt-2">
+          <div class="bg-white h-1.5 rounded-full" [style.width.%]="selectedMachine.oee"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Hourly Part Count Chart -->
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-3 md:p-4 mb-3 border border-gray-200 dark:border-gray-700">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
+        <h2 class="text-xs sm:text-sm font-semibold text-gray-800 dark:text-white">Hourly Part Count</h2>
+        <span class="text-xs font-semibold text-gray-600 dark:text-gray-400">Total: <span class="text-teal-600 dark:text-teal-400">497 parts</span></span>
+      </div>
+      <div class="h-[180px] sm:h-[220px]">
+        <div *ngIf="isClient" echarts [options]="hourlyPartCountChartOption" class="w-full h-full"></div>
+      </div>
+    </div>
+
+    <!-- Gantt Chart -->
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 border border-gray-200 dark:border-gray-700">
+      <h2 class="text-sm font-semibold text-gray-800 dark:text-white mb-3">Machine Status Timeline</h2>
+      
+      <!-- Shift Labels -->
+      <div class="flex justify-between text-xs text-gray-600 dark:text-gray-400 mb-2">
+        <div class="flex flex-col">
+          <span class="font-semibold">Shift 1</span>
+          <span>06:00 - 14:00</span>
+        </div>
+        <div class="flex flex-col">
+          <span class="font-semibold">Shift 2</span>
+          <span>14:00 - 22:00</span>
+        </div>
+        <div class="flex flex-col">
+          <span class="font-semibold">Shift 3</span>
+          <span>22:00 - 06:00</span>
+        </div>
+      </div>
+
+      <div class="overflow-x-auto">
+        <div class="min-w-full">
+          <!-- Timeline bar -->
+          <div class="relative h-12 bg-gray-100 dark:bg-gray-700 rounded-lg mb-2">
+            <!-- Running period -->
+            <div class="absolute h-full bg-green-500 rounded-l-lg" style="left: 0%; width: 16.67%;"></div>
+            <!-- Idle period -->
+            <div class="absolute h-full bg-yellow-500" style="left: 16.67%; width: 4.17%;"></div>
+            <!-- Running period -->
+            <div class="absolute h-full bg-green-500" style="left: 20.84%; width: 25%;"></div>
+            <!-- Maintenance period -->
+            <div class="absolute h-full bg-red-500" style="left: 45.84%; width: 8.33%;"></div>
+            <!-- Running period -->
+            <div class="absolute h-full bg-green-500 rounded-r-lg" style="left: 54.17%; width: 45.83%;"></div>
+          </div>
+
+          <!-- Time markers -->
+          <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 border-t border-gray-300 dark:border-gray-600 pt-1">
+            <span>06:00</span>
+            <span>08:00</span>
+            <span>10:00</span>
+            <span>12:00</span>
+            <span>14:00</span>
+            <span>16:00</span>
+            <span>18:00</span>
+            <span>20:00</span>
+            <span>22:00</span>
+            <span>00:00</span>
+            <span>02:00</span>
+            <span>04:00</span>
+            <span>05:59</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Legend -->
+      <div class="flex flex-wrap gap-3 justify-center mt-4 text-xs">
+        <div class="flex items-center gap-1.5">
+          <div class="w-3 h-3 bg-green-500 rounded"></div>
+          <span class="text-gray-600 dark:text-gray-400">Running</span>
+        </div>
+        <div class="flex items-center gap-1.5">
+          <div class="w-3 h-3 bg-yellow-500 rounded"></div>
+          <span class="text-gray-600 dark:text-gray-400">Idle</span>
+        </div>
+        <div class="flex items-center gap-1.5">
+          <div class="w-3 h-3 bg-red-500 rounded"></div>
+          <span class="text-gray-600 dark:text-gray-400">Maintenance</span>
+        </div>
+        <div class="flex items-center gap-1.5">
+          <div class="w-3 h-3 bg-gray-500 rounded"></div>
+          <span class="text-gray-600 dark:text-gray-400">Offline</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>

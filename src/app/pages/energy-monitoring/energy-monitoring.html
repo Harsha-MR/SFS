@@ -1,0 +1,147 @@
+<div class="p-6 bg-gray-50 dark:bg-gray-900 min-h-screen transition-colors duration-200">
+  <div class="mb-6">
+    <h1 class="text-3xl font-bold text-gray-800 dark:text-white">Energy Monitoring</h1>
+    <p class="text-gray-600 dark:text-gray-300 mt-2">Monitor and track energy consumption across facilities</p>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+    <!-- Energy Metrics -->
+    <div class="bg-white p-6 rounded-lg shadow">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-gray-500 text-sm">Current Usage</p>
+          <p class="text-2xl font-bold text-gray-800 mt-2">1,250 kW</p>
+        </div>
+        <div class="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
+          <svg class="w-6 h-6 text-yellow-600" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M7 2v11h3v9l7-12h-4l4-8z"/>
+          </svg>
+        </div>
+      </div>
+      <div class="mt-2 flex items-center text-sm">
+        <span class="text-green-600">↓ 5%</span>
+        <span class="text-gray-500 ml-2">vs last hour</span>
+      </div>
+    </div>
+
+    <div class="bg-white p-6 rounded-lg shadow">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-gray-500 text-sm">Daily Consumption</p>
+          <p class="text-2xl font-bold text-gray-800 mt-2">28,450 kWh</p>
+        </div>
+        <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+          <svg class="w-6 h-6 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/>
+          </svg>
+        </div>
+      </div>
+      <div class="mt-2 flex items-center text-sm">
+        <span class="text-red-600">↑ 2%</span>
+        <span class="text-gray-500 ml-2">vs yesterday</span>
+      </div>
+    </div>
+
+    <div class="bg-white p-6 rounded-lg shadow">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-gray-500 text-sm">Monthly Total</p>
+          <p class="text-2xl font-bold text-gray-800 mt-2">842,300 kWh</p>
+        </div>
+        <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+          <svg class="w-6 h-6 text-green-600" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"/>
+          </svg>
+        </div>
+      </div>
+      <div class="mt-2 flex items-center text-sm">
+        <span class="text-green-600">↓ 8%</span>
+        <span class="text-gray-500 ml-2">vs last month</span>
+      </div>
+    </div>
+
+    <div class="bg-white p-6 rounded-lg shadow">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-gray-500 text-sm">Cost Savings</p>
+          <p class="text-2xl font-bold text-gray-800 mt-2">$12,450</p>
+        </div>
+        <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+          <svg class="w-6 h-6 text-purple-600" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/>
+          </svg>
+        </div>
+      </div>
+      <div class="mt-2 flex items-center text-sm">
+        <span class="text-green-600">↑ 12%</span>
+        <span class="text-gray-500 ml-2">this month</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Energy Consumption Chart -->
+    <div class="bg-white p-6 rounded-lg shadow">
+      <h2 class="text-xl font-semibold text-gray-800 mb-4">Energy Consumption Trend</h2>
+      <div class="h-64 flex items-center justify-center bg-gray-50 rounded">
+        <p class="text-gray-500">Chart will be displayed here</p>
+      </div>
+    </div>
+
+    <!-- Equipment Energy Usage -->
+    <div class="bg-white p-6 rounded-lg shadow">
+      <h2 class="text-xl font-semibold text-gray-800 mb-4">Equipment Energy Usage</h2>
+      <div class="space-y-4">
+        <div>
+          <div class="flex justify-between mb-1">
+            <span class="text-sm text-gray-600">Machine A</span>
+            <span class="text-sm font-semibold text-gray-800">450 kW</span>
+          </div>
+          <div class="w-full bg-gray-200 rounded-full h-2">
+            <div class="bg-teal-600 h-2 rounded-full" style="width: 75%"></div>
+          </div>
+        </div>
+
+        <div>
+          <div class="flex justify-between mb-1">
+            <span class="text-sm text-gray-600">Machine B</span>
+            <span class="text-sm font-semibold text-gray-800">320 kW</span>
+          </div>
+          <div class="w-full bg-gray-200 rounded-full h-2">
+            <div class="bg-blue-600 h-2 rounded-full" style="width: 60%"></div>
+          </div>
+        </div>
+
+        <div>
+          <div class="flex justify-between mb-1">
+            <span class="text-sm text-gray-600">Machine C</span>
+            <span class="text-sm font-semibold text-gray-800">280 kW</span>
+          </div>
+          <div class="w-full bg-gray-200 rounded-full h-2">
+            <div class="bg-green-600 h-2 rounded-full" style="width: 50%"></div>
+          </div>
+        </div>
+
+        <div>
+          <div class="flex justify-between mb-1">
+            <span class="text-sm text-gray-600">HVAC System</span>
+            <span class="text-sm font-semibold text-gray-800">150 kW</span>
+          </div>
+          <div class="w-full bg-gray-200 rounded-full h-2">
+            <div class="bg-yellow-600 h-2 rounded-full" style="width: 35%"></div>
+          </div>
+        </div>
+
+        <div>
+          <div class="flex justify-between mb-1">
+            <span class="text-sm text-gray-600">Lighting</span>
+            <span class="text-sm font-semibold text-gray-800">50 kW</span>
+          </div>
+          <div class="w-full bg-gray-200 rounded-full h-2">
+            <div class="bg-purple-600 h-2 rounded-full" style="width: 15%"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
