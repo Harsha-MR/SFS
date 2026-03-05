@@ -1,4 +1,4 @@
-import { Component, OnInit, PLATFORM_ID, Inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, PLATFORM_ID, Inject } from '@angular/core';
 import { CommonModule, DOCUMENT, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgxEchartsModule } from 'ngx-echarts';
@@ -40,6 +40,8 @@ interface Plant {
   quality: number;
   oee: number;
   targetOee: number;
+  energyCost: number;
+  opportunityCost: number;
   zones: Zone[];
 }
 
@@ -59,7 +61,7 @@ interface TrendPoint {
   templateUrl: './plant-dashboard.html',
   styleUrl: './plant-dashboard.css',
 })
-export class PlantDashboard implements OnInit {
+export class PlantDashboard implements OnInit, OnDestroy {
   private document = inject(DOCUMENT);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
@@ -113,6 +115,8 @@ export class PlantDashboard implements OnInit {
     quality: 78,
     oee: 100,
     targetOee: 85,
+    energyCost: 12500,
+    opportunityCost: 8750,
     zones: [
       {
         id: 1,
@@ -122,7 +126,7 @@ export class PlantDashboard implements OnInit {
         availability: 88.2,
         performance: 91.5,
         quality: 97.2,
-        oee: 78.5,
+        oee: 86.5,
         machines: [
           {
             id: 101,
@@ -189,7 +193,7 @@ export class PlantDashboard implements OnInit {
         availability: 82.8,
         performance: 89.2,
         quality: 96.5,
-        oee: 71.3,
+        oee: 76.3,
         machines: [
           {
             id: 201,
@@ -234,7 +238,75 @@ export class PlantDashboard implements OnInit {
         availability: 86.5,
         performance: 95.8,
         quality: 98.2,
-        oee: 81.3,
+        oee: 52.4,
+        machines: [
+          {
+            id: 301,
+            name: 'Machine Q1',
+            status: 'running',
+            availability: 90.5,
+            performance: 96.5,
+            quality: 99.0,
+            oee: 86.4,
+            currentParts: 520,
+            targetParts: 550
+          },
+          {
+            id: 302,
+            name: 'Machine Q2',
+            status: 'running',
+            availability: 88.0,
+            performance: 95.0,
+            quality: 98.5,
+            oee: 82.3,
+            currentParts: 510,
+            targetParts: 550
+          },
+        ]
+      },
+       {
+        id: 3,
+        name: 'Parts Zone',
+        activeMachines: 4,
+        totalMachines: 5,
+        availability: 86.5,
+        performance: 95.8,
+        quality: 98.2,
+        oee:29.6,
+        machines: [
+          {
+            id: 301,
+            name: 'Machine Q1',
+            status: 'running',
+            availability: 90.5,
+            performance: 96.5,
+            quality: 99.0,
+            oee: 86.4,
+            currentParts: 520,
+            targetParts: 550
+          },
+          {
+            id: 302,
+            name: 'Machine Q2',
+            status: 'running',
+            availability: 88.0,
+            performance: 95.0,
+            quality: 98.5,
+            oee: 82.3,
+            currentParts: 510,
+            targetParts: 550
+          },
+        ]
+      },
+       {
+        id: 3,
+        name: 'Parts Zone',
+        activeMachines: 4,
+        totalMachines: 5,
+        availability: 86.5,
+        performance: 95.8,
+        quality: 98.2,
+        oee:29.6,
         machines: [
           {
             id: 301,
@@ -325,9 +397,57 @@ export class PlantDashboard implements OnInit {
   // Area chart and radar chart options for today's efficiency
   largeAreaChartOption: EChartsOption = {};
   metricsRadarChartOption: EChartsOption = {};
+  
+  // Plant highlights data with enhanced details
+  plantHighlights = [
+    { 
+      zoneName: 'Assembly Zone', 
+      machineName: 'Machine A5', 
+      status: 'maintenance', 
+      oee: 0,
+      reason: 'Scheduled preventive maintenance in progress',
+      highlight: 'requires immediate attention'
+    },
+    { 
+      zoneName: 'Packaging Zone', 
+      machineName: 'Machine P3', 
+      status: 'offline', 
+      oee: 0,
+      reason: 'System failure detected, technician dispatched',
+      highlight: 'critical downtime'
+    },
+    { 
+      zoneName: 'Quality Check Zone', 
+      machineName: 'Machine Q1', 
+      status: 'running', 
+      oee: 86.4,
+      reason: '',
+      highlight: 'excellent performance'
+    },
+    { 
+      zoneName: 'Assembly Zone', 
+      machineName: 'Machine A3', 
+      status: 'idle', 
+      oee: 60.5,
+      reason: 'Waiting for material supply',
+      highlight: 'below target'
+    },
+    { 
+      zoneName: 'Packaging Zone', 
+      machineName: 'Machine P1', 
+      status: 'running', 
+      oee: 79.3,
+      reason: '',
+      highlight: 'good performance'
+    },
+  ];
+  
+  currentHighlightIndex = 0;
+  highlightInterval: any;
 
   ngOnInit() {
     this.initCharts();
+    this.startHighlightCarousel();
     
     // Subscribe to route parameters to determine current view
     this.route.params.subscribe(params => {
@@ -395,7 +515,44 @@ export class PlantDashboard implements OnInit {
     
     return {
       tooltip: {
-        show: false
+        show: true,
+        trigger: 'item',
+        backgroundColor: isDark ? '#1f2937' : '#ffffff',
+        borderColor: isDark ? '#4b5563' : '#e5e7eb',
+        textStyle: {
+          color: textColor,
+          fontSize: 11
+        },
+        formatter: () => {
+          return [
+            `<div style='min-width:100px; font-size:11px'>`,
+            `<strong>OEE:</strong> <strong>${oee}%</strong><br/>`,
+            `<strong>Availability:</strong> ${availability}%<br/>`,
+            `<strong>Performance:</strong> ${performance}%<br/>`,
+            `<strong>Quality:</strong> ${quality}%`,
+            `</div>`
+          ].join('');
+        },
+        confine: true,
+        position: function (point, params, dom, rect, size) {
+          var x = point[0];
+          var y = point[1];
+          var viewWidth = size.viewSize[0];
+          var viewHeight = size.viewSize[1];
+          var boxWidth = size.contentSize[0];
+          var boxHeight = size.contentSize[1];
+          var posX = x + 10;
+          var posY = y + 10;
+          if (x + boxWidth + 10 > viewWidth) {
+            posX = x - boxWidth - 10;
+          }
+          if (y + boxHeight + 10 > viewHeight) {
+            posY = y - boxHeight - 10;
+          }
+          if (posX < 0) posX = 10;
+          if (posY < 0) posY = 10;
+          return [posX, posY];
+        }
       },
       series: [
         {
@@ -403,17 +560,20 @@ export class PlantDashboard implements OnInit {
           type: 'pie',
           radius: ['70%', '90%'],
           avoidLabelOverlap: false,
-          silent: true,
           label: {
             show: true,
             position: 'center',
-            fontSize: 20,
+            fontSize: 18,
             fontWeight: 'bold',
             color: this.getOeeStrokeColor(oee),
-            formatter: () => `${oee}%`
+            formatter: () => `OEE\n ${oee}%`
           },
           labelLine: {
             show: false
+          },
+          emphasis: {
+            scale: true,
+            scaleSize: 5
           },
           data: [
             { 
@@ -456,7 +616,7 @@ export class PlantDashboard implements OnInit {
         bottom: 0,
         left: 'center',
         orient: 'horizontal',
-        itemGap: 10,
+        itemGap: 20,
         itemWidth: 20,
         itemHeight: 12,
         textStyle: {
@@ -465,9 +625,9 @@ export class PlantDashboard implements OnInit {
         }
       },
       grid: {
-        left: '3%',
+        left: '2%',
         right: '4%',
-        bottom: '15%',
+        bottom: '25%',
         top: '5%',
         containLabel: true
       },
@@ -1133,19 +1293,134 @@ export class PlantDashboard implements OnInit {
     return new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
   }
 
-  getZoneStatus(active: number, total: number): string {
-    const percentage = (active / total) * 100;
-    if (percentage === 100) return 'Optimal';
-    if (percentage >= 75) return 'Good';
-    if (percentage >= 50) return 'Warning';
+  getZoneStatus(percentage : number): string {
+    
+    if (percentage >= 85) return 'Good';
+    if (percentage >= 60) return 'Warning';
+    if (percentage >= 40) return 'Poor';
     return 'Critical';
   }
 
-  getZoneStatusClass(active: number, total: number): string {
-    const percentage = (active / total) * 100;
-    if (percentage === 100) return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
-    if (percentage >= 75) return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300';
-    if (percentage >= 50) return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
+  getZoneStatusClass(percentage: number): string {
+    
+    if (percentage >= 85) return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
+    if (percentage >= 60) return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
+    if (percentage >= 40) return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300';
     return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300';
+  }
+
+  get criticalMachines() {
+    const allMachines: Array<{shortName: string, oee: number, fullName: string}> = [];
+    
+    this.plant.zones.forEach(zone => {
+      zone.machines.forEach(machine => {
+        if (machine.oee < 60) {
+          // Shorten machine name (e.g., "Machine A1" -> "MA-1")
+          const nameParts = machine.name.split(' ');
+          let shortName = machine.name;
+          if (nameParts.length >= 2) {
+            const prefix = nameParts[0].substring(0, 1) + nameParts[1].substring(0, 1);
+            const number = nameParts[1].replace(/[^0-9]/g, '');
+            shortName = `${prefix}-${number}`;
+          }
+          allMachines.push({
+            shortName,
+            oee: machine.oee,
+            fullName: machine.name
+          });
+        }
+      });
+    });
+    
+    return allMachines.sort((a, b) => a.oee - b.oee);
+  }
+
+  getHighlightStatusClass(status: string): string {
+    switch (status) {
+      case 'running':
+        return 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800';
+      case 'idle':
+        return 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800';
+      case 'offline':
+        return 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700';
+      case 'maintenance':
+        return 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800';
+      default:
+        return 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700';
+    }
+  }
+
+  getHighlightStatusIcon(status: string): string {
+    return this.getMachineStatusIcon(status);
+  }
+
+  getHighlightStatusColor(status: string): string {
+    switch (status) {
+      case 'running':
+        return 'text-green-600 dark:text-green-400';
+      case 'idle':
+        return 'text-yellow-600 dark:text-yellow-400';
+      case 'offline':
+        return 'text-gray-600 dark:text-gray-400';
+      case 'maintenance':
+        return 'text-red-600 dark:text-red-400';
+      default:
+        return 'text-gray-600 dark:text-gray-400';
+    }
+  }
+
+  startHighlightCarousel() {
+    if (!this.isBrowser || this.plantHighlights.length <= 1) return;
+    this.stopHighlightCarousel();
+    this.highlightInterval = setInterval(() => {
+      this.currentHighlightIndex = (this.currentHighlightIndex + 1) % this.plantHighlights.length;
+    }, 5000);
+  }
+
+
+  stopHighlightCarousel() {
+    if (this.highlightInterval) {
+      clearInterval(this.highlightInterval);
+    }
+  }
+
+  goToHighlight(index: number) {
+    this.currentHighlightIndex = index;
+    this.stopHighlightCarousel();
+    this.startHighlightCarousel();
+  }
+
+  nextHighlight() {
+    this.currentHighlightIndex = (this.currentHighlightIndex + 1) % this.plantHighlights.length;
+    this.stopHighlightCarousel();
+    this.startHighlightCarousel();
+  }
+
+  previousHighlight() {
+    this.currentHighlightIndex = (this.currentHighlightIndex - 1 + this.plantHighlights.length) % this.plantHighlights.length;
+    this.stopHighlightCarousel();
+    this.startHighlightCarousel();
+  }
+
+
+
+  getHighlightSentence(highlight: any): string {
+    const zone = `<span class="font-semibold text-teal-600 dark:text-teal-400">${highlight.zoneName}</span>`;
+    const machine = `<span class="font-semibold text-gray-800 dark:text-white">${highlight.machineName}</span>`;
+    const oeeClass = this.getOeeTextColor(highlight.oee).replace('text-', '');
+    const oee = `<span class="font-bold ${this.getOeeTextColor(highlight.oee)}">${highlight.oee}%</span>`;
+    const highlightText = `<span class="font-semibold ${this.getHighlightStatusColor(highlight.status)}">${highlight.highlight}</span>`;
+    
+    if (highlight.oee < 60) {
+      return `${machine} in ${zone} is showing ${highlightText} with OEE at ${oee}. ${highlight.reason ? 'Reason: ' + highlight.reason : ''}`;
+    } else if (highlight.status === 'maintenance' || highlight.status === 'offline') {
+      return `${machine} in ${zone} is currently ${highlightText}. ${highlight.reason}`;
+    } else {
+      return `${machine} in ${zone} is demonstrating ${highlightText} with OEE at ${oee}.`;
+    }
+  }
+
+  ngOnDestroy() {
+    this.stopHighlightCarousel();
   }
 }

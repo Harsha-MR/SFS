@@ -3,17 +3,45 @@
   <!-- Plant Level View -->
   <div *ngIf="currentView === 'plant'" class=" page-transition">
     <!-- Row 1: Plant Header -->
-    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-2 md:p-4 mb-3 border border-gray-200 dark:border-gray-700">
-      <div class="flex items-center justify-between mb-1   border-gray-200 dark:border-gray-700">
-        <h1 class="text-lg sm:text-xl font-bold text-gray-800 dark:text-white">{{ plant.name }}</h1>
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-2 md:p-3 mb-3 border border-gray-200 dark:border-gray-700">
+      <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-2 mb-1 border-gray-200 dark:border-gray-700">
+        <!-- Plant Name -->
+        <h1 class="text-lg sm:text-xl font-bold text-gray-800 dark:text-white whitespace-nowrap">{{ plant.name }}</h1>
+        
+        <!-- Critical Machines Marquee - Hidden on mobile, shown on tablet+ -->
+        <div *ngIf="criticalMachines.length > 0" class="hidden md:block flex-1 overflow-hidden max-w-full lg:max-w-[70%] relative">
+          <div class="critical-machines-train">
+            <span *ngFor="let machine of criticalMachines" 
+                   class="inline-flex items-center gap-2 px-2 py-1 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md text-sm whitespace-nowrap mx-2"
+                   [title]="machine.fullName">
+              <span class="w-2 h-2 rounded-full bg-red-600 dark:bg-red-500 animate-blink"></span>
+              <span class="font-semibold text-gray-700 dark:text-gray-300">{{ machine.shortName }}</span>
+              <span class="text-red-600 dark:text-red-400 font-bold">{{ machine.oee }}%</span>
+            </span>
+          </div>
+        </div>
+        
+        <!-- Toggle Button -->
         <button 
           (click)="togglePlantEfficiencyView()"
-          class="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-lg transition-all duration-300 
+          class="px-2 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-lg transition-all duration-300 
                  bg-teal-600 hover:bg-teal-700 text-white shadow-sm hover:shadow-md
-                 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 max-w-[180px] sm:max-w-none">
+                 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 whitespace-nowrap flex-shrink-0">
           <span class="whitespace-normal leading-tight">{{ plantEfficiencyView === 'today' ? 'View Weekly Trend' : 'View Today\'s Efficiency' }}</span>
         </button>
-        <!-- <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Plant Level Dashboard</p> -->
+      </div>
+      
+      <!-- Critical Machines for Mobile - Marquee -->
+      <div *ngIf="criticalMachines.length > 0" class="md:hidden overflow-hidden mt-2 pb-1 relative">
+        <div class="critical-machines-train">
+          <span *ngFor="let machine of criticalMachines" 
+                 class="inline-flex items-center gap-2 px-3 py-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md text-sm whitespace-nowrap mx-2"
+                 [title]="machine.fullName">
+            <span class="w-2 h-2 rounded-full bg-red-600 dark:bg-red-500 animate-blink"></span>
+            <span class="font-semibold text-gray-700 dark:text-gray-300">{{ machine.shortName }}</span>
+            <span class="text-red-600 dark:text-red-400 font-bold">{{ machine.oee }}%</span>
+          </span>
+        </div>
       </div>
     </div>
 
@@ -35,10 +63,33 @@
              <div class="flex flex-col gap-3 md:gap-4">
                <!-- Gauges Card -->
                <div class="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-3 md:p-4 h-full overflow-hidden">
-                 <h3 class="text-xs sm:text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 md:mb-3">Today's Performance Metrics</h3>
+                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2 md:mb-3">
+                   <h3 class="text-xs sm:text-sm font-bold text-gray-700 dark:text-gray-300">Today's Performance Metrics</h3>
+                   
+                   <!-- Energy and Opportunity Cost inline -->
+                   <div class="flex items-center gap-2 flex-wrap">
+                     <!-- Energy Cost -->
+                     <div class="flex items-center gap-1.5 px-2 py-1 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-lg border border-blue-200 dark:border-blue-700">
+                       <svg class="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                       </svg>
+                       <div class="text-[10px] font-medium text-blue-700 dark:text-blue-300">Energy Cost</div>
+                       <div class="text-sm font-bold text-blue-800 dark:text-blue-200">${{ (plant.energyCost / 1000).toFixed(1) }}k</div>
+                     </div>
+                     
+                     <!-- Opportunity Cost -->
+                     <div class="flex items-center gap-1.5 px-2 py-1 bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 rounded-lg border border-purple-200 dark:border-purple-700">
+                       <svg class="w-4 h-4 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                       </svg>
+                       <div class="text-[10px] font-medium text-purple-700 dark:text-purple-300">Opportunity Cost</div>
+                       <div class="text-sm font-bold text-purple-800 dark:text-purple-200">${{ (plant.opportunityCost / 1000).toFixed(1) }}k</div>
+                     </div>
+                   </div>
+                 </div>
                  
                  <!-- Gauge Charts for Desktop and Above (lg:1024px+) -->
-                 <div class="hidden lg:grid lg:grid-cols-5 gap-3 h-[200px]">
+                 <div class="hidden lg:grid lg:grid-cols-5 gap-2 h-[200px]">
                    <!-- Availability Half Gauge -->
                    <div class="flex items-center justify-center min-h-0">
                      <div *ngIf="isClient" echarts [options]="availabilityGaugeOption" class="w-full h-full"></div>
@@ -65,10 +116,8 @@
                    </div>
                  </div>
                  
-                 <!-- Text View for Tablet and Mobile (below lg:1024px) -->
-                 <div class="lg:hidden space-y-3">
-                   <!-- Other Metrics Grid -->
-                   <div class="grid grid-cols-2 gap-2 sm:gap-3">
+                 <!-- Other Metrics Grid - Only for Tablet and Mobile (hidden on lg+) -->
+                 <div class="lg:hidden grid grid-cols-2 gap-2 sm:gap-3">
                      <!-- OEE -->
                      <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 text-center border border-gray-200 dark:border-gray-600">
                        <div class="flex items-center justify-center gap-1.5 mb-2">
@@ -114,15 +163,92 @@
                        <div class="text-2xl sm:text-3xl font-bold text-amber-600 dark:text-amber-400">{{ plant.targetOee }}%</div>
                      </div>
                    </div>
-                 </div>
                </div>
              </div>
              
-             <!-- Right Column (20%) - Radar Chart (Hidden on mobile, shown on tablet+) -->
+             <!-- Right Column (20%) - Plant Highlights Carousel -->
              <div class="hidden lg:block bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-3 md:p-4">
-               <div class="flex items-center justify-center h-full min-h-[240px]">
-                 <!-- <div *ngIf="isClient" echarts [options]="metricsRadarChartOption" class="w-full h-full"></div> -->
-                 <div class="text-gray-400 dark:text-gray-500 text-sm text-center">Radar Chart</div>
+               <h3 class="text-xs font-bold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+                 <span>Plant Highlights</span>
+                 <span class="inline-block w-2 h-2 bg-teal-500 rounded-full animate-pulse"></span>
+               </h3>
+               
+               <!-- Carousel Container -->
+               <div class="relative h-[180px] mb-3 overflow-hidden">
+                 <!-- Left Navigation Button -->
+                 <button 
+                   (click)="previousHighlight()" 
+                   class="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 dark:bg-gray-800/90 hover:bg-white dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 p-1.5 rounded-r-lg shadow-lg transition-all duration-300 focus:outline-none"
+                   [attr.aria-label]="'Previous highlight'">
+                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                   </svg>
+                 </button>
+                 
+                 <!-- Right Navigation Button -->
+                 <button 
+                   (click)="nextHighlight()" 
+                   class="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 dark:bg-gray-800/90 hover:bg-white dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 p-1.5 rounded-l-lg shadow-lg transition-all duration-300 focus:outline-none"
+                   [attr.aria-label]="'Next highlight'">
+                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                   </svg>
+                 </button>
+                 
+                 <!-- Cards Container -->
+                 <div class="relative h-full w-full">
+                   <div *ngFor="let highlight of plantHighlights; let i = index" 
+                        class="absolute inset-0 transition-all duration-500 ease-in-out px-8"
+                        [style.opacity]="i === currentHighlightIndex ? '1' : '0'"
+                        [style.transform]="i === currentHighlightIndex ? 'translateX(0)' : (i < currentHighlightIndex ? 'translateX(-100%)' : 'translateX(100%)')"
+                        [style.pointer-events]="i === currentHighlightIndex ? 'auto' : 'none'">
+                     <div class="h-full p-3 rounded-lg border-2 shadow-md transition-all duration-300"
+                          [ngClass]="getHighlightStatusClass(highlight.status)">
+                       
+                       <!-- Status Icon Badge -->
+                       <div class="flex items-center justify-between mb-2">
+                         <div class="flex items-center gap-1.5">
+                           <span class="text-lg" [ngClass]="getHighlightStatusColor(highlight.status)">
+                             {{ getHighlightStatusIcon(highlight.status) }}
+                           </span>
+                           <span class="text-[10px] font-bold uppercase tracking-wide" [ngClass]="getHighlightStatusColor(highlight.status)">
+                             {{ highlight.status }}
+                           </span>
+                         </div>
+                         <div class="text-xl font-bold" [ngClass]="getOeeTextColor(highlight.oee)">
+                           {{ highlight.oee }}%
+                         </div>
+                       </div>
+                       
+                       <!-- Highlight Sentence -->
+                       <div class="text-xs text-gray-700 dark:text-gray-300 leading-relaxed mb-2" 
+                            [innerHTML]="getHighlightSentence(highlight)">
+                       </div>
+                       
+                       <!-- Alert Badge for Critical Machines -->
+                       <div *ngIf="highlight.oee < 60 || highlight.status === 'maintenance' || highlight.status === 'offline'" 
+                            class="mt-2 flex items-center gap-1 text-[10px] font-semibold">
+                         <svg class="w-3 h-3" [ngClass]="getHighlightStatusColor(highlight.status)" fill="currentColor" viewBox="0 0 20 20">
+                           <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                         </svg>
+                         <span [ngClass]="getHighlightStatusColor(highlight.status)">Needs Attention</span>
+                       </div>
+                     </div>
+                   </div>
+                 </div>
+               </div>
+               
+               <!-- Dot Indicators -->
+               <div class="flex justify-center gap-1.5">
+                 <button *ngFor="let highlight of plantHighlights; let i = index"
+                         (click)="goToHighlight(i)"
+                         class="w-2 h-2 rounded-full transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:ring-offset-1"
+                         [ngClass]="{
+                           'bg-teal-600 dark:bg-teal-500 w-6': i === currentHighlightIndex,
+                           'bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500': i !== currentHighlightIndex
+                         }"
+                         [attr.aria-label]="'Go to highlight ' + (i + 1)">
+                 </button>
                </div>
              </div>
            </div>
@@ -190,8 +316,8 @@
             <div class="flex items-center justify-between">
               <h3 class="text-sm font-semibold text-gray-800 dark:text-white">{{ zone.name }}</h3>
               <span class="px-2 py-0.5 text-xs rounded" 
-                    [ngClass]="getZoneStatusClass(zone.activeMachines, zone.totalMachines)">
-                {{ getZoneStatus(zone.activeMachines, zone.totalMachines) }}
+                    [ngClass]="getZoneStatusClass(zone.oee)">
+                {{ getZoneStatus(zone.oee) }}
               </span>
             </div>
             <p class="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
