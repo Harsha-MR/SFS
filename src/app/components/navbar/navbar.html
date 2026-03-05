@@ -7,8 +7,8 @@
     </div>
   </div>
 
-  <!-- Navigation Menu -->
-  <div class="hidden xl:flex flex-1 items-center space-x-1 overflow-x-auto">
+  <!-- Navigation Menu and hide navigation menu when user has multiple plant and he is in /dashboard page -->
+  <div *ngIf="showNavMenu" class="hidden xl:flex flex-1 items-center space-x-1 overflow-x-auto">
     @for (item of menuItems; track item.label) {
       <a
         [routerLink]="item.route"
@@ -100,7 +100,7 @@
   </div>
 </nav>
 
-<div *ngIf="isMenuOpen" class="fixed top-16 left-0 right-0 z-20 xl:hidden bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-lg">
+<div *ngIf="isMenuOpen && showNavMenu" class="fixed top-16 left-0 right-0 z-20 xl:hidden bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-lg">
   <div class="px-3 py-2 space-y-1 max-h-[70vh] overflow-y-auto">
     @for (item of menuItems; track item.label) {
       <a

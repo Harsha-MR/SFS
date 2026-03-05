@@ -5,6 +5,7 @@ import { NgxEchartsModule } from 'ngx-echarts';
 import { EChartsOption } from 'echarts';
 import { inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { UserService } from '../../services/user.service';
 
 interface Machine {
   id: number;
@@ -79,10 +80,13 @@ export class PlantDashboard implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private platformId = inject(PLATFORM_ID);
+  private userService = inject(UserService);
   private isBrowser: boolean;
+  isMultiPlantUser = false;
   
   constructor() {
     this.isBrowser = isPlatformBrowser(this.platformId);
+    this.isMultiPlantUser = this.userService.hasMultiplePlants();
   }
   
   get isClient(): boolean {
@@ -93,6 +97,10 @@ export class PlantDashboard implements OnInit, OnDestroy {
   currentView: 'plant' | 'zone' | 'machine' = 'plant';
   selectedZone: Zone | null = null;
   selectedMachine: Machine | null = null;
+  
+  backToDashboard() {
+    this.router.navigate(['/dashboard']);
+  }
   
   trendView: 'daily' | 'weekly' | 'monthly' = 'weekly';
   showTrends: boolean = true;

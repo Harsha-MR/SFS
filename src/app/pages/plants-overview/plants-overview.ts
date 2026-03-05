@@ -14,6 +14,9 @@ interface Plant {
   availability: number;
   performance: number;
   quality: number;
+  currentShift: string;
+  shiftStartTime: string;
+  shiftEndTime: string;
 }
 
 @Component({
@@ -37,6 +40,9 @@ export class PlantsOverviewComponent implements OnInit {
       availability: 88.2,
       performance: 91.5,
       quality: 97.2,
+      currentShift: 'Shift 1',
+      shiftStartTime: '06:00',
+      shiftEndTime: '14:00',
     },
     {
       id: 'plant-002',
@@ -49,6 +55,9 @@ export class PlantsOverviewComponent implements OnInit {
       availability: 75.5,
       performance: 82.1,
       quality: 94.8,
+      currentShift: 'Shift 2',
+      shiftStartTime: '14:00',
+      shiftEndTime: '22:00',
     },
     {
       id: 'plant-003',
@@ -61,6 +70,9 @@ export class PlantsOverviewComponent implements OnInit {
       availability: 58.3,
       performance: 68.5,
       quality: 89.2,
+      currentShift: 'Shift 3',
+      shiftStartTime: '22:00',
+      shiftEndTime: '06:00',
     },
   ];
 
