@@ -27,6 +27,10 @@ interface Zone {
   performance: number;
   quality: number;
   oee: number;
+  runningTimeHrs: number;
+  idleTimeHrs: number;
+  breakdownTimeHrs: number;
+  totalPartsProduced: number;
   machines: Machine[];
 }
 
@@ -62,6 +66,15 @@ interface TrendPoint {
   styleUrl: './plant-dashboard.css',
 })
 export class PlantDashboard implements OnInit, OnDestroy {
+    isTrainPaused = false;
+
+    onTrainMouseEnter() {
+      this.isTrainPaused = true;
+    }
+
+    onTrainMouseLeave() {
+      this.isTrainPaused = false;
+    }
   private document = inject(DOCUMENT);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
@@ -76,6 +89,7 @@ export class PlantDashboard implements OnInit, OnDestroy {
     return this.isBrowser;
   }
   
+  plantId: string = '';
   currentView: 'plant' | 'zone' | 'machine' = 'plant';
   selectedZone: Zone | null = null;
   selectedMachine: Machine | null = null;
@@ -127,6 +141,10 @@ export class PlantDashboard implements OnInit, OnDestroy {
         performance: 91.5,
         quality: 97.2,
         oee: 86.5,
+        runningTimeHrs: 6.5,
+        idleTimeHrs: 1.2,
+        breakdownTimeHrs: 0.3,
+        totalPartsProduced: 3820,
         machines: [
           {
             id: 101,
@@ -194,6 +212,10 @@ export class PlantDashboard implements OnInit, OnDestroy {
         performance: 89.2,
         quality: 96.5,
         oee: 76.3,
+        runningTimeHrs: 5.8,
+        idleTimeHrs: 1.5,
+        breakdownTimeHrs: 0.7,
+        totalPartsProduced: 2280,
         machines: [
           {
             id: 201,
@@ -235,6 +257,10 @@ export class PlantDashboard implements OnInit, OnDestroy {
         name: 'Quality Check Zone',
         activeMachines: 4,
         totalMachines: 5,
+        runningTimeHrs: 6.2,
+        idleTimeHrs: 1.0,
+        breakdownTimeHrs: 0.8,
+        totalPartsProduced: 4120,
         availability: 86.5,
         performance: 95.8,
         quality: 98.2,
@@ -265,18 +291,22 @@ export class PlantDashboard implements OnInit, OnDestroy {
         ]
       },
        {
-        id: 3,
+        id: 4,
         name: 'Parts Zone',
         activeMachines: 4,
         totalMachines: 5,
         availability: 86.5,
         performance: 95.8,
         quality: 98.2,
-        oee:29.6,
+        oee: 29.6,
+        runningTimeHrs: 4.5,
+        idleTimeHrs: 2.0,
+        breakdownTimeHrs: 1.5,
+        totalPartsProduced: 1850,
         machines: [
           {
-            id: 301,
-            name: 'Machine Q1',
+            id: 401,
+            name: 'Machine PT1',
             status: 'running',
             availability: 90.5,
             performance: 96.5,
@@ -286,42 +316,8 @@ export class PlantDashboard implements OnInit, OnDestroy {
             targetParts: 550
           },
           {
-            id: 302,
-            name: 'Machine Q2',
-            status: 'running',
-            availability: 88.0,
-            performance: 95.0,
-            quality: 98.5,
-            oee: 82.3,
-            currentParts: 510,
-            targetParts: 550
-          },
-        ]
-      },
-       {
-        id: 3,
-        name: 'Parts Zone',
-        activeMachines: 4,
-        totalMachines: 5,
-        availability: 86.5,
-        performance: 95.8,
-        quality: 98.2,
-        oee:29.6,
-        machines: [
-          {
-            id: 301,
-            name: 'Machine Q1',
-            status: 'running',
-            availability: 90.5,
-            performance: 96.5,
-            quality: 99.0,
-            oee: 86.4,
-            currentParts: 520,
-            targetParts: 550
-          },
-          {
-            id: 302,
-            name: 'Machine Q2',
+            id: 402,
+            name: 'Machine PT2',
             status: 'running',
             availability: 88.0,
             performance: 95.0,
@@ -451,8 +447,14 @@ export class PlantDashboard implements OnInit, OnDestroy {
     
     // Subscribe to route parameters to determine current view
     this.route.params.subscribe(params => {
+      const plantId = params['plantId'];
       const zoneName = params['zoneName'];
       const machineName = params['machineName'];
+      
+      // Store plantId for navigation
+      if (plantId) {
+        this.plantId = plantId;
+      }
       
       if (machineName && zoneName) {
         // Machine view
@@ -1208,7 +1210,7 @@ export class PlantDashboard implements OnInit, OnDestroy {
 
   selectZone(zone: Zone) {
     const zoneName = this.encodeRouteName(zone.name);
-    this.router.navigate(['/dashboard/plant', zoneName]);
+    this.router.navigate(['/dashboard', this.plantId, zoneName]);
     this.machineStatusFilter = 'all';
   }
 
@@ -1216,18 +1218,18 @@ export class PlantDashboard implements OnInit, OnDestroy {
     if (this.selectedZone) {
       const zoneName = this.encodeRouteName(this.selectedZone.name);
       const machineName = this.encodeRouteName(machine.name);
-      this.router.navigate(['/dashboard/plant', zoneName, machineName]);
+      this.router.navigate(['/dashboard', this.plantId, zoneName, machineName]);
     }
   }
 
   backToPlant() {
-    this.router.navigate(['/dashboard/plant']);
+    this.router.navigate(['/dashboard', this.plantId]);
   }
 
   backToZone() {
     if (this.selectedZone) {
       const zoneName = this.encodeRouteName(this.selectedZone.name);
-      this.router.navigate(['/dashboard/plant', zoneName]);
+      this.router.navigate(['/dashboard', this.plantId, zoneName]);
     }
   }
 

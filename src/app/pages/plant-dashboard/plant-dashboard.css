@@ -1,3 +1,19 @@
+/* Marquee animation pause/resume */
+.critical-machines-train {
+  animation: marquee-rtl 20s linear infinite;
+  will-change: transform;
+}
+.critical-machines-train.paused {
+  animation-play-state: paused;
+}
+@keyframes marquee-rtl {
+  0% {
+    transform: translateX(100%);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
 .page-transition {
   animation: fadeIn 0.3s ease-in;
 }
@@ -65,15 +81,13 @@ div[echarts] {
 .critical-machines-train {
   display: inline-flex;
   white-space: nowrap;
-  animation: train-scroll 15s linear infinite;
+  animation: train-scroll 13s linear infinite;
+  will-change: transform;
 }
 
 @keyframes train-scroll {
   0% {
-    transform: translateX(100%);
-  }
-  66.67% {
-    transform: translateX(-100%);
+    transform: translateX(400%);
   }
   100% {
     transform: translateX(-100%);
@@ -117,6 +131,7 @@ div[echarts] {
 /* Enhance highlight cards appearance */
 .highlight-card-enter {
   animation: slideInRight 0.5s ease-out;
+  will-change: opacity, transform;
 }
 
 @keyframes slideInRight {

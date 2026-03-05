@@ -1,0 +1,15 @@
+/* Plant card hover animation */
+.bg-white:hover {
+  transform: translateY(-4px);
+}
+
+/* Smooth transitions */
+.transition-all {
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Progress bar animation */
+.rounded-full {
+  transition: width 0.5s ease-in-out;
+}

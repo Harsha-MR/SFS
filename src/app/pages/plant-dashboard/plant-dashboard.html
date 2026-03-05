@@ -9,8 +9,11 @@
         <h1 class="text-lg sm:text-xl font-bold text-gray-800 dark:text-white whitespace-nowrap">{{ plant.name }}</h1>
         
         <!-- Critical Machines Marquee - Hidden on mobile, shown on tablet+ -->
-        <div *ngIf="criticalMachines.length > 0" class="hidden md:block flex-1 overflow-hidden max-w-full lg:max-w-[70%] relative">
-          <div class="critical-machines-train">
+           <div *ngIf="criticalMachines.length > 0" class="hidden md:block flex-1 overflow-hidden max-w-full lg:max-w-[70%] relative"
+             (mouseenter)="onTrainMouseEnter()" 
+             (mouseleave)="onTrainMouseLeave()">
+          <div class="critical-machines-train" 
+            [class.paused]="isTrainPaused">
             <span *ngFor="let machine of criticalMachines" 
                    class="inline-flex items-center gap-2 px-2 py-1 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md text-sm whitespace-nowrap mx-2"
                    [title]="machine.fullName">
@@ -32,8 +35,11 @@
       </div>
       
       <!-- Critical Machines for Mobile - Marquee -->
-      <div *ngIf="criticalMachines.length > 0" class="md:hidden overflow-hidden mt-2 pb-1 relative">
-        <div class="critical-machines-train">
+       <div *ngIf="criticalMachines.length > 0" class="md:hidden overflow-hidden mt-2 pb-1 relative"
+         (mouseenter)="onTrainMouseEnter()" 
+         (mouseleave)="onTrainMouseLeave()">
+         <div class="critical-machines-train" 
+           [class.paused]="isTrainPaused">
           <span *ngFor="let machine of criticalMachines" 
                  class="inline-flex items-center gap-2 px-3 py-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md text-sm whitespace-nowrap mx-2"
                  [title]="machine.fullName">
@@ -64,7 +70,22 @@
                <!-- Gauges Card -->
                <div class="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-3 md:p-4 h-full overflow-hidden">
                  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2 md:mb-3">
-                   <h3 class="text-xs sm:text-sm font-bold text-gray-700 dark:text-gray-300">Today's Performance Metrics</h3>
+                   <div class="flex items-center gap-2">
+                     <h3 class="text-xs sm:text-sm font-bold text-gray-700 dark:text-gray-300">Today's Performance Metrics</h3>
+                     <div class="flex items-center gap-1.5 px-2 py-1 bg-gradient-to-br from-teal-50 to-teal-100 dark:from-teal-900/20 dark:to-teal-800/20 rounded-lg border border-teal-200 dark:border-teal-700">
+                       <svg class="w-4 h-4 text-teal-600 dark:text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                       </svg>
+                       <div class="relative group">
+                         <div class="text-xs font-bold text-teal-700 dark:text-teal-300 cursor-pointer">{{ plant.currentShift }}</div>
+                         <div class="absolute left-1/2 -translate-x-1/2 mt-2 z-50 min-w-[160px] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg px-4 py-2 text-xs text-gray-700 dark:text-gray-200 font-normal opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-opacity duration-200">
+                           <div class="font-bold text-teal-700 dark:text-teal-300 mb-1">{{ plant.currentShift }}</div>
+                           <div>Start time: <span class="font-semibold">{{ plant.shiftStartTime }}</span></div>
+                           <div>End time: <span class="font-semibold">{{ plant.shiftEndTime }}</span></div>
+                         </div>
+                       </div>
+                     </div>
+                   </div>
                    
                    <!-- Energy and Opportunity Cost inline -->
                    <div class="flex items-center gap-2 flex-wrap">
@@ -73,7 +94,7 @@
                        <svg class="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
                        </svg>
-                       <div class="text-[10px] font-medium text-blue-700 dark:text-blue-300">Energy Cost</div>
+                       <div class="text-[10px] font-bold text-blue-700 dark:text-blue-300">Energy Cost</div>
                        <div class="text-sm font-bold text-blue-800 dark:text-blue-200">${{ (plant.energyCost / 1000).toFixed(1) }}k</div>
                      </div>
                      
@@ -82,7 +103,7 @@
                        <svg class="w-4 h-4 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                        </svg>
-                       <div class="text-[10px] font-medium text-purple-700 dark:text-purple-300">Opportunity Cost</div>
+                       <div class="text-[10px] font-bold text-purple-700 dark:text-purple-300">Opportunity Cost</div>
                        <div class="text-sm font-bold text-purple-800 dark:text-purple-200">${{ (plant.opportunityCost / 1000).toFixed(1) }}k</div>
                      </div>
                    </div>
@@ -328,28 +349,35 @@
           <!-- Zone Body -->
           <div class="p-3 sm:p-4">
             <div class="grid grid-cols-1 sm:grid-cols-[50fr_50fr] gap-3 sm:gap-4 items-center">
-              <!-- Left: APQ Metrics (50%) -->
+              <!-- Left: Time and Production Metrics (50%) -->
               <div class="space-y-1.5">
                 <div class="flex items-center justify-between">
                   <div class="flex items-center gap-2">
-                    <div class="w-2.5 h-2.5 rounded-full bg-blue-500"></div>
-                    <span class="text-xs text-gray-600 dark:text-gray-400">Availability</span>
+                    <div class="w-2.5 h-2.5 rounded-full bg-green-500"></div>
+                    <span class="text-xs text-gray-600 dark:text-gray-400">Running Time</span>
                   </div>
-                  <span class="text-sm font-semibold text-gray-800 dark:text-white">{{ zone.availability }}%</span>
+                  <span class="text-sm font-semibold text-gray-800 dark:text-white">{{ zone.runningTimeHrs }} hrs</span>
                 </div>
                 <div class="flex items-center justify-between">
                   <div class="flex items-center gap-2">
                     <div class="w-2.5 h-2.5 rounded-full bg-yellow-500"></div>
-                    <span class="text-xs text-gray-600 dark:text-gray-400">Performance</span>
+                    <span class="text-xs text-gray-600 dark:text-gray-400">Idle Time</span>
                   </div>
-                  <span class="text-sm font-semibold text-gray-800 dark:text-white">{{ zone.performance }}%</span>
+                  <span class="text-sm font-semibold text-gray-800 dark:text-white">{{ zone.idleTimeHrs }} hrs</span>
                 </div>
                 <div class="flex items-center justify-between">
                   <div class="flex items-center gap-2">
-                    <div class="w-2.5 h-2.5 rounded-full bg-green-500"></div>
-                    <span class="text-xs text-gray-600 dark:text-gray-400">Quality</span>
+                    <div class="w-2.5 h-2.5 rounded-full bg-red-500"></div>
+                    <span class="text-xs text-gray-600 dark:text-gray-400">Breakdown Time</span>
                   </div>
-                  <span class="text-sm font-semibold text-gray-800 dark:text-white">{{ zone.quality }}%</span>
+                  <span class="text-sm font-semibold text-gray-800 dark:text-white">{{ zone.breakdownTimeHrs }} hrs</span>
+                </div>
+                <div class="flex items-center justify-between pt-1 border-t border-gray-200 dark:border-gray-600">
+                  <div class="flex items-center gap-2">
+                    <div class="w-2.5 h-2.5 rounded-full bg-blue-500"></div>
+                    <span class="text-xs text-gray-600 dark:text-gray-400">Total Parts</span>
+                  </div>
+                  <span class="text-sm font-semibold text-gray-800 dark:text-white">{{ zone.totalPartsProduced }}</span>
                 </div>
               </div>
               
