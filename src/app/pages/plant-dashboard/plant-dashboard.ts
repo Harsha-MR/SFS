@@ -10,7 +10,7 @@ import { UserService } from '../../services/user.service';
 interface Machine {
   id: number;
   name: string;
-  status: 'running' | 'idle' | 'offline' | 'maintenance';
+  status: 'running' | 'idle' | 'offline' | 'breakdown';
   availability: number;
   performance: number;
   quality: number;
@@ -30,6 +30,7 @@ interface Zone {
   oee: number;
   runningTimeHrs: number;
   idleTimeHrs: number;
+  OffTimeHrs: number;
   breakdownTimeHrs: number;
   totalPartsProduced: number;
   machines: Machine[];
@@ -68,6 +69,10 @@ interface TrendPoint {
 })
 export class PlantDashboard implements OnInit, OnDestroy {
     isTrainPaused = false;
+    isZoneMachineTrainPaused = false;
+    zoneDropdownSelectedId: number | null = null;
+    zoneChartToggle: 'oee' | 'hourly' = 'oee';
+    isZoneDropdownExpanded = false;
 
     onTrainMouseEnter() {
       this.isTrainPaused = true;
@@ -75,6 +80,46 @@ export class PlantDashboard implements OnInit, OnDestroy {
 
     onTrainMouseLeave() {
       this.isTrainPaused = false;
+    }
+    
+    onZoneMachineTrainMouseEnter() {
+      this.isZoneMachineTrainPaused = true;
+    }
+
+    onZoneMachineTrainMouseLeave() {
+      this.isZoneMachineTrainPaused = false;
+    }
+    
+    toggleZoneChart() {
+      this.zoneChartToggle = this.zoneChartToggle === 'oee' ? 'hourly' : 'oee';
+    }
+    
+    toggleZoneDropdown() {
+      this.isZoneDropdownExpanded = !this.isZoneDropdownExpanded;
+    }
+    
+    onZoneDropdownChange() {
+      if (this.zoneDropdownSelectedId != null) {
+        const zone = this.plant.zones.find(z => z.id === +this.zoneDropdownSelectedId!);
+        if (zone) {
+          this.selectZone(zone);
+        }
+      }
+    }
+    
+    getMachineStatusBorderClass(status: string): string {
+      switch (status) {
+        case 'running':
+          return 'border-green-500 bg-green-50 dark:bg-green-900/20';
+        case 'idle':
+          return 'border-yellow-500 bg-yellow-50 dark:bg-yellow-900/20';
+        case 'offline':
+          return 'border-gray-500 bg-gray-50 dark:bg-gray-700';
+        case 'breakdown':
+          return 'border-red-500 bg-red-50 dark:bg-red-900/20';
+        default:
+          return 'border-gray-500 bg-gray-50 dark:bg-gray-700';
+      }
     }
   private document = inject(DOCUMENT);
   private route = inject(ActivatedRoute);
@@ -151,6 +196,7 @@ export class PlantDashboard implements OnInit, OnDestroy {
         oee: 86.5,
         runningTimeHrs: 6.5,
         idleTimeHrs: 1.2,
+        OffTimeHrs: 0.5,
         breakdownTimeHrs: 0.3,
         totalPartsProduced: 3820,
         machines: [
@@ -201,7 +247,7 @@ export class PlantDashboard implements OnInit, OnDestroy {
           {
             id: 105,
             name: 'Machine A5',
-            status: 'maintenance',
+            status: 'breakdown',
             availability: 0,
             performance: 0,
             quality: 0,
@@ -223,6 +269,7 @@ export class PlantDashboard implements OnInit, OnDestroy {
         runningTimeHrs: 5.8,
         idleTimeHrs: 1.5,
         breakdownTimeHrs: 0.7,
+        OffTimeHrs: 0.5,
         totalPartsProduced: 2280,
         machines: [
           {
@@ -267,6 +314,7 @@ export class PlantDashboard implements OnInit, OnDestroy {
         totalMachines: 5,
         runningTimeHrs: 6.2,
         idleTimeHrs: 1.0,
+        OffTimeHrs: 0.5,
         breakdownTimeHrs: 0.8,
         totalPartsProduced: 4120,
         availability: 86.5,
@@ -309,6 +357,7 @@ export class PlantDashboard implements OnInit, OnDestroy {
         oee: 29.6,
         runningTimeHrs: 4.5,
         idleTimeHrs: 2.0,
+        OffTimeHrs: 0.5,
         breakdownTimeHrs: 1.5,
         totalPartsProduced: 1850,
         machines: [
@@ -382,7 +431,7 @@ export class PlantDashboard implements OnInit, OnDestroy {
     { status: 'Running', start: '00:00', duration: 2, color: 'bg-green-500' },
     { status: 'Idle', start: '02:00', duration: 0.5, color: 'bg-yellow-500' },
     { status: 'Running', start: '02:30', duration: 3, color: 'bg-green-500' },
-    { status: 'Maintenance', start: '05:30', duration: 1, color: 'bg-red-500' },
+    { status: 'Breakdown', start: '05:30', duration: 1, color: 'bg-red-500' },
     { status: 'Running', start: '06:30', duration: 5.5, color: 'bg-green-500' },
   ];
 
@@ -407,9 +456,9 @@ export class PlantDashboard implements OnInit, OnDestroy {
     { 
       zoneName: 'Assembly Zone', 
       machineName: 'Machine A5', 
-      status: 'maintenance', 
+      status: 'breakdown', 
       oee: 0,
-      reason: 'Scheduled preventive maintenance in progress',
+      reason: 'Scheduled preventive breakdown in progress',
       highlight: 'requires immediate attention'
     },
     { 
@@ -470,17 +519,22 @@ export class PlantDashboard implements OnInit, OnDestroy {
         this.selectedZone = this.plant.zones.find(z => this.encodeRouteName(z.name) === zoneName) || null;
         if (this.selectedZone) {
           this.selectedMachine = this.selectedZone.machines.find(m => this.encodeRouteName(m.name) === machineName) || null;
+          this.zoneDropdownSelectedId = this.selectedZone.id;
         }
       } else if (zoneName) {
         // Zone view
         this.currentView = 'zone';
         this.selectedZone = this.plant.zones.find(z => this.encodeRouteName(z.name) === zoneName) || null;
         this.selectedMachine = null;
+        if (this.selectedZone) {
+          this.zoneDropdownSelectedId = this.selectedZone.id;
+        }
       } else {
         // Plant view
         this.currentView = 'plant';
         this.selectedZone = null;
         this.selectedMachine = null;
+        this.zoneDropdownSelectedId = null;
       }
     });
   }
@@ -503,20 +557,21 @@ export class PlantDashboard implements OnInit, OnDestroy {
   }
 
   private initCharts() {
-    this.plantOeeChartOption = this.getOeeChartOption(this.plant.oee, this.plant.availability, this.plant.performance, this.plant.quality);
-    this.weeklyTrendChartOption = this.getWeeklyTrendChartOption();
-    this.hourlyPartCountChartOption = this.getHourlyPartCountChartOption();
+    // Using notMerge and lazyUpdate to prevent "chart instance already initialized" warning
+    this.plantOeeChartOption = { ...this.getOeeChartOption(this.plant.oee, this.plant.availability, this.plant.performance, this.plant.quality), notMerge: true };
+    this.weeklyTrendChartOption = { ...this.getWeeklyTrendChartOption(), notMerge: true };
+    this.hourlyPartCountChartOption = { ...this.getHourlyPartCountChartOption(), notMerge: true };
     
     // Initialize gauge charts for today's efficiency and change the color of lable in dark mode to light color for better visibility
-    this.availabilityGaugeOption = this.getHalfGaugeOption('Availability', this.plant.availability, );
-    this.performanceGaugeOption = this.getHalfGaugeOption('Performance', this.plant.performance, '#22c55e');
-    this.qualityGaugeOption = this.getHalfGaugeOption('Quality', this.plant.quality, '#a78bfa');
-    this.targetOeeGaugeOption = this.getHalfGaugeOption('Target OEE', this.plant.targetOee, '#f59e0b');
-    this.oeeMainGaugeOption = this.getMainGaugeOption('OEE', this.plant.oee);
+    this.availabilityGaugeOption = { ...this.getHalfGaugeOption('Availability', this.plant.availability, ), notMerge: true };
+    this.performanceGaugeOption = { ...this.getHalfGaugeOption('Performance', this.plant.performance, '#22c55e'), notMerge: true };
+    this.qualityGaugeOption = { ...this.getHalfGaugeOption('Quality', this.plant.quality, '#a78bfa'), notMerge: true };
+    this.targetOeeGaugeOption = { ...this.getHalfGaugeOption('Target OEE', this.plant.targetOee, '#f59e0b'), notMerge: true };
+    this.oeeMainGaugeOption = { ...this.getMainGaugeOption('OEE', this.plant.oee), notMerge: true };
     
     // Initialize area chart and radar chart
-    this.largeAreaChartOption = this.getLargeAreaChartOption();
-    this.metricsRadarChartOption = this.getMetricsRadarChartOption();
+    this.largeAreaChartOption = { ...this.getLargeAreaChartOption(), notMerge: true };
+    this.metricsRadarChartOption = { ...this.getMetricsRadarChartOption(), notMerge: true };
   }
 
   getOeeChartOption(oee: number, availability: number, performance: number, quality: number): EChartsOption {
@@ -812,6 +867,196 @@ export class PlantDashboard implements OnInit, OnDestroy {
             type: 'dashed'
           },
           symbolSize: 6
+        }
+      ]
+    };
+  }
+
+  getZoneOeeComparisonChartOption(): EChartsOption {
+    const isDark = this.isDarkMode();
+    const textColor = this.getTextColor();
+    const axisLineColor = this.getAxisLineColor();
+    
+    // Mock data for yesterday and today OEE by hour
+    const hours = ['00:00', '02:00', '04:00', '06:00', '08:00', '10:00', '12:00', '14:00', '16:00', '18:00', '20:00', '22:00'];
+    const yesterdayOee = [65, 68, 70, 72, 75, 78, 76, 74, 72, 70, 68, 66];
+    const todayOee = [70, 72, 75, 78, 80, 82, 85, 83, 81, 79, 76, 74];
+    
+    return {
+      tooltip: {
+        trigger: 'axis',
+        backgroundColor: isDark ? '#1f2937' : '#ffffff',
+        borderColor: isDark ? '#4b5563' : '#e5e7eb',
+        textStyle: {
+          color: textColor
+        },
+        formatter: (params: any) => {
+          const dataIndex = params[0].dataIndex;
+          const startTime = hours[dataIndex];
+          const endTime = dataIndex < hours.length - 1 ? hours[dataIndex + 1] : '23:59';
+          let result = `<div style="font-size: 11px;"><strong>Time:</strong> ${startTime} - ${endTime}<br/>`;
+          params.forEach((param: any) => {
+            result += `<strong>${param.seriesName}:</strong> ${param.value}%<br/>`;
+          });
+          result += '</div>';
+          return result;
+        },
+        confine: true
+      },
+      legend: {
+        data: ['Yesterday OEE', 'Today OEE'],
+        bottom: 0,
+        textStyle: {
+          color: textColor,
+          fontSize: 11
+        }
+      },
+      grid: {
+        left: '3%',
+        right: '4%',
+        bottom: '15%',
+        top: '10%',
+        containLabel: true
+      },
+      xAxis: {
+        type: 'category',
+        data: hours,
+        axisLine: {
+          lineStyle: {
+            color: axisLineColor
+          }
+        },
+        axisLabel: {
+          color: textColor,
+          fontSize: 10
+        }
+      },
+      yAxis: {
+        type: 'value',
+        min: 0,
+        max: 100,
+        axisLine: {
+          lineStyle: {
+            color: axisLineColor
+          }
+        },
+        axisLabel: {
+          color: textColor,
+          formatter: '{value}%'
+        },
+        splitLine: {
+          lineStyle: {
+            color: isDark ? '#374151' : '#f3f4f6'
+          }
+        }
+      },
+      series: [
+        {
+          name: 'Yesterday OEE',
+          type: 'line',
+          data: yesterdayOee,
+          itemStyle: {
+            color: '#9ca3af'
+          },
+          lineStyle: {
+            width: 2,
+            color: '#9ca3af',
+            type: 'dashed'
+          },
+          symbolSize: 6
+        },
+        {
+          name: 'Today OEE',
+          type: 'line',
+          data: todayOee,
+          smooth: true,
+          itemStyle: {
+            color: '#14b8a6'
+          },
+          lineStyle: {
+            width: 2,
+            color: '#14b8a6'
+          },
+          symbolSize: 6
+        }
+      ]
+    };
+  }
+
+  getZoneHourlyPartCountChartOption(): EChartsOption {
+    const isDark = this.isDarkMode();
+    const textColor = this.getTextColor();
+    const axisLineColor = this.getAxisLineColor();
+    
+    // Mock hourly data for zone
+    const hours = ['06:00', '07:00', '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00'];
+    const parts = [45, 52, 48, 55, 50, 47, 53, 49, 51];
+    
+    return {
+      tooltip: {
+        trigger: 'axis',
+        backgroundColor: isDark ? '#1f2937' : '#ffffff',
+        borderColor: isDark ? '#4b5563' : '#e5e7eb',
+        textStyle: {
+          color: textColor
+        },
+        formatter: (params: any) => {
+          const dataIndex = params[0].dataIndex;
+          const startTime = hours[dataIndex];
+          const endTime = dataIndex < hours.length - 1 ? hours[dataIndex + 1] : hours[dataIndex];
+          const parts = params[0].value;
+          return `<div style="font-size: 11px;"><strong>Time:</strong> ${startTime} - ${endTime}<br/><strong>Parts:</strong> ${parts}</div>`;
+        },
+        confine: true,
+        axisPointer: {
+          type: 'shadow'
+        }
+      },
+      grid: {
+        left: '3%',
+        right: '4%',
+        bottom: '10%',
+        top: '10%',
+        containLabel: true
+      },
+      xAxis: {
+        type: 'category',
+        data: hours,
+        axisLine: {
+          lineStyle: {
+            color: axisLineColor
+          }
+        },
+        axisLabel: {
+          color: textColor,
+          fontSize: 10
+        }
+      },
+      yAxis: {
+        type: 'value',
+        min: 0,
+        axisLine: {
+          lineStyle: {
+            color: axisLineColor
+          }
+        },
+        axisLabel: {
+          color: textColor
+        },
+        splitLine: {
+          lineStyle: {
+            color: isDark ? '#374151' : '#f3f4f6'
+          }
+        }
+      },
+      series: [
+        {
+          type: 'bar',
+          data: parts,
+          itemStyle: {
+            color: '#14b8a6'
+          },
+          barMaxWidth: 30
         }
       ]
     };
@@ -1249,7 +1494,7 @@ export class PlantDashboard implements OnInit, OnDestroy {
         return 'bg-yellow-100 text-yellow-800 border-yellow-300 dark:bg-yellow-900 dark:text-yellow-300 dark:border-yellow-700';
       case 'offline':
         return 'bg-gray-100 text-gray-800 border-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600';
-      case 'maintenance':
+      case 'breakdown':
         return 'bg-red-100 text-red-800 border-red-300 dark:bg-red-900 dark:text-red-300 dark:border-red-700';
       default:
         return 'bg-gray-100 text-gray-800 border-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600';
@@ -1264,8 +1509,8 @@ export class PlantDashboard implements OnInit, OnDestroy {
         return '◐';
       case 'offline':
         return '○';
-      case 'maintenance':
-        return '⚙';
+      case 'breakdown':
+        return '⚠';
       default:
         return '○';
     }
@@ -1353,7 +1598,7 @@ export class PlantDashboard implements OnInit, OnDestroy {
         return 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800';
       case 'offline':
         return 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700';
-      case 'maintenance':
+      case ' breakdown':
         return 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800';
       default:
         return 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700';
@@ -1372,7 +1617,7 @@ export class PlantDashboard implements OnInit, OnDestroy {
         return 'text-yellow-600 dark:text-yellow-400';
       case 'offline':
         return 'text-gray-600 dark:text-gray-400';
-      case 'maintenance':
+      case 'breakdown':
         return 'text-red-600 dark:text-red-400';
       default:
         return 'text-gray-600 dark:text-gray-400';
@@ -1423,7 +1668,7 @@ export class PlantDashboard implements OnInit, OnDestroy {
     
     if (highlight.oee < 60) {
       return `${machine} in ${zone} is showing ${highlightText} with OEE at ${oee}. ${highlight.reason ? 'Reason: ' + highlight.reason : ''}`;
-    } else if (highlight.status === 'maintenance' || highlight.status === 'offline') {
+    } else if (highlight.status === 'breakdown' || highlight.status === 'offline') {
       return `${machine} in ${zone} is currently ${highlightText}. ${highlight.reason}`;
     } else {
       return `${machine} in ${zone} is demonstrating ${highlightText} with OEE at ${oee}.`;

@@ -85,21 +85,22 @@ export class PlantsOverviewComponent implements OnInit {
   ) {}
 
   ngOnInit() {
+    // If not logged in, redirect to login
+    if (!this.userService.isLoggedIn()) {
+      this.router.navigate(['/login']);
+      return;
+    }
+
     // Get user's plant IDs
     const userPlantIds = this.userService.getUserPlantIds();
-    
     // Filter plants to show only those assigned to the user
     this.plants = this.allPlants.filter(plant => userPlantIds.includes(plant.id));
-    
+
     // If user has only one plant, navigate directly to that plant's dashboard
     if (this.plants.length === 1) {
       this.navigateToPlant(this.plants[0].id);
     }
-    
-    // If user has no plants, redirect to login
-    if (this.plants.length === 0) {
-      this.router.navigate(['/login']);
-    }
+    // If user has no plants but is logged in, stay on dashboard (do not redirect)
   }
 
   navigateToPlant(plantId: string) {

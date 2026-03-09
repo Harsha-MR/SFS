@@ -26,6 +26,15 @@
         
         <!-- Action Buttons -->
         <div class="flex items-center gap-2 flex-shrink-0">
+          <!-- Toggle Button -->
+          <button 
+            (click)="togglePlantEfficiencyView()"
+            class="px-2 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-lg transition-all duration-300 
+                   bg-teal-600 hover:bg-teal-700 text-white shadow-sm hover:shadow-md
+                   focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 whitespace-nowrap flex-shrink-0">
+            <span class="whitespace-normal leading-tight">{{ plantEfficiencyView === 'today' ? 'View Weekly Trend' : 'View Today\'s Efficiency' }}</span>
+          </button>
+
           <!-- Back to Dashboard Button (only for multi-plant users) -->
           <button 
             *ngIf="isMultiPlantUser"
@@ -37,15 +46,6 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
             </svg>
             <span class="whitespace-normal leading-tight">Back to Dashboard</span>
-          </button>
-          
-          <!-- Toggle Button -->
-          <button 
-            (click)="togglePlantEfficiencyView()"
-            class="px-2 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-lg transition-all duration-300 
-                   bg-teal-600 hover:bg-teal-700 text-white shadow-sm hover:shadow-md
-                   focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 whitespace-nowrap flex-shrink-0">
-            <span class="whitespace-normal leading-tight">{{ plantEfficiencyView === 'today' ? 'View Weekly Trend' : 'View Today\'s Efficiency' }}</span>
           </button>
         </div>
       </div>
@@ -383,6 +383,13 @@
                 </div>
                 <div class="flex items-center justify-between">
                   <div class="flex items-center gap-2">
+                    <div class="w-2.5 h-2.5 rounded-full bg-gray-500"></div>
+                    <span class="text-xs text-gray-600 dark:text-gray-400">Off Time</span>
+                  </div>
+                  <span class="text-sm font-semibold text-gray-800 dark:text-white">{{ zone.OffTimeHrs }} hrs</span>
+                </div>
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2">
                     <div class="w-2.5 h-2.5 rounded-full bg-red-500"></div>
                     <span class="text-xs text-gray-600 dark:text-gray-400">Breakdown Time</span>
                   </div>
@@ -429,29 +436,188 @@
     </div>
 
     <!-- Zone Header -->
-    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 mb-3 border border-gray-200 dark:border-gray-700">
-      <h1 class="text-xl font-bold text-gray-800 dark:text-white">{{ selectedZone.name }}</h1>
-      <p class="text-xs text-gray-600 dark:text-gray-300 mt-0.5">Zone Level Dashboard</p>
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-3 sm:p-4 mb-3 border border-gray-200 dark:border-gray-700">
+      <!-- Tablet (768px) and Mobile: Stacked Layout -->
+      <div class="md:hidden flex flex-col gap-2">
+        <!-- Top Row: Zone Name and Change Zone inline -->
+        <div class="flex items-center gap-2">
+          <!-- Zone Name (fully visible, wraps if needed) -->
+          <h1 class="text-lg sm:text-xl font-bold text-gray-800 dark:text-white break-words flex-shrink-0">{{ selectedZone.name }}</h1>
+          <!-- Zone Dropdown (takes remaining width, no label) -->
+          <select id="zoneSelectMobile" [(ngModel)]="zoneDropdownSelectedId" (change)="onZoneDropdownChange()"
+            class="flex-1 min-w-0 px-2 py-1.5 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-xs text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-teal-400">
+            <option *ngFor="let zone of plant.zones" [value]="zone.id">{{ zone.name }}</option>
+          </select>
+        </div>
+        
+        <!-- Bottom Row: Machine Train -->
+        <div class="overflow-hidden relative"
+             (mouseenter)="onZoneMachineTrainMouseEnter()" 
+             (mouseleave)="onZoneMachineTrainMouseLeave()">
+          <div class="critical-machines-train" [class.paused]="isZoneMachineTrainPaused">
+            <span *ngFor="let machine of selectedZone.machines" 
+                  class="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs whitespace-nowrap mx-1.5 border-2"
+                  [ngClass]="getMachineStatusBorderClass(machine.status)">
+              <span class="w-1.5 h-1.5 rounded-full animate-blink" 
+                    [ngClass]="machine.status === 'running' ? 'bg-green-600' : machine.status === 'idle' ? 'bg-yellow-600' : machine.status === 'breakdown' ? 'bg-red-600' : 'bg-gray-600'"></span>
+              <span class="font-semibold text-gray-700 dark:text-gray-300">{{ machine.name }}</span>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Desktop/Laptop (1024px+): Three-column layout, dropdown always visible -->
+      <div class="hidden md:flex items-center gap-4">
+        <!-- Left: Zone Name (auto width) -->
+        <div class="flex-shrink-0">
+          <h1 class="text-lg lg:text-xl font-bold text-gray-800 dark:text-white whitespace-nowrap">{{ selectedZone.name }}</h1>
+        </div>
+
+        <!-- Center: Machine Train (takes remaining space) -->
+        <div class="flex-1 overflow-hidden relative min-w-0"
+             (mouseenter)="onZoneMachineTrainMouseEnter()" 
+             (mouseleave)="onZoneMachineTrainMouseLeave()">
+          <div class="critical-machines-train" [class.paused]="isZoneMachineTrainPaused">
+            <span *ngFor="let machine of selectedZone.machines" 
+                  class="inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-sm whitespace-nowrap mx-2 border-2"
+                  [ngClass]="getMachineStatusBorderClass(machine.status)">
+              <span class="w-2 h-2 rounded-full animate-blink" 
+                    [ngClass]="machine.status === 'running' ? 'bg-green-600' : machine.status === 'idle' ? 'bg-yellow-600' : machine.status === 'breakdown' ? 'bg-red-600' : 'bg-gray-600'"></span>
+              <span class="font-semibold text-gray-700 dark:text-gray-300">{{ machine.name }}</span>
+            </span>
+          </div>
+        </div>
+
+        <!-- Right: Change Zone Dropdown (always visible on desktop/4K) -->
+        <div class="flex-shrink-0 flex items-center gap-2 whitespace-nowrap">
+          <label for="zoneSelectDesktop" class="text-xs font-medium text-gray-700 dark:text-gray-300">Change Zone:</label>
+          <select id="zoneSelectDesktop" [(ngModel)]="zoneDropdownSelectedId" (change)="onZoneDropdownChange()"
+            class="px-3 py-1.5 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-teal-400">
+            <option *ngFor="let zone of plant.zones" [value]="zone.id">{{ zone.name }}</option>
+          </select>
+        </div>
+      </div>
     </div>
 
-    <!-- Zone APQ & OEE Cards -->
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 mb-3">
-      <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-2.5 sm:p-3 border border-gray-200 dark:border-gray-700">
-        <h3 class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Availability</h3>
-        <p class="text-xl sm:text-2xl font-bold text-blue-600 dark:text-blue-400">{{ selectedZone.availability }}%</p>
+    <!-- Zone APQ & OEE Cards - 25-25-50 Layout -->
+    <div class="grid grid-cols-1 lg:grid-cols-[25fr_25fr_50fr] gap-2 sm:gap-3 mb-3">
+      
+      <!-- First 25%: OEE Doughnut and Time Stats -->
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-3 sm:p-4 border border-gray-200 dark:border-gray-700">
+        <h3 class="text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 sm:mb-3">Performance Overview</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-[45fr_55fr] lg:grid-cols-1 gap-2 sm:gap-3 items-center">
+          <!-- OEE Doughnut - Visible on tablet and desktop (≥641px) -->
+          <div class="h-[100px] sm:h-[120px] hidden xs:flex items-center justify-center">
+            <div *ngIf="isClient" echarts [options]="getZoneOeeChartOption(selectedZone)" class="w-full h-full"></div>
+          </div>
+          <!-- OEE Text - Visible only on mobile (≤640px) -->
+          <div class="flex xs:hidden justify-center items-center mb-3">
+            <div class="text-center">
+              <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">OEE</div>
+              <div class="text-3xl font-bold" [ngClass]="getOeeColor(selectedZone.oee)">{{ selectedZone.oee }}%</div>
+            </div>
+          </div>
+          
+          <!-- Time Stats -->
+          <div class="space-y-1.5 sm:space-y-2">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-1.5">
+                <div class="w-2 h-2 rounded-full bg-green-500"></div>
+                <span class="text-xs text-gray-600 dark:text-gray-400">Running Time</span>
+              </div>
+              <span class="text-xs font-semibold text-gray-800 dark:text-white">{{ selectedZone.runningTimeHrs }}h</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-1.5">
+                <div class="w-2 h-2 rounded-full bg-yellow-500"></div>
+                <span class="text-xs text-gray-600 dark:text-gray-400">Idle Time</span>
+              </div>
+              <span class="text-xs font-semibold text-gray-800 dark:text-white">{{ selectedZone.idleTimeHrs }}h</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-1.5">
+                <div class="w-2 h-2 rounded-full bg-gray-500"></div>
+                <span class="text-xs text-gray-600 dark:text-gray-400">OFF Time</span>
+              </div>
+              <span class="text-xs font-semibold text-gray-800 dark:text-white">{{ selectedZone.OffTimeHrs }}h</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-1.5">
+                <div class="w-2 h-2 rounded-full bg-red-500"></div>
+                <span class="text-xs text-gray-600 dark:text-gray-400">Breakdown Time</span>
+              </div>
+              <span class="text-xs font-semibold text-gray-800 dark:text-white">{{ selectedZone.breakdownTimeHrs }}h</span>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-2.5 sm:p-3 border border-gray-200 dark:border-gray-700">
-        <h3 class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Performance</h3>
-        <p class="text-xl sm:text-2xl font-bold text-green-600 dark:text-green-400">{{ selectedZone.performance }}%</p>
+      
+      <!-- Second 25%: Energy and Production Stats -->
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-3 sm:p-4 border border-gray-200 dark:border-gray-700">
+        <h3 class="text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 sm:mb-3">Production Stats</h3>
+        <div class="space-y-2 sm:space-y-3">
+          <!-- Total Energy -->
+          <div class="flex items-center gap-1.5 sm:gap-2">
+            <svg class="w-4 h-4 sm:w-5 sm:h-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+            </svg>
+            <span class="text-xs text-gray-600 dark:text-gray-400 whitespace-nowrap">Total Energy:</span>
+            <span class="text-xs sm:text-sm font-bold text-gray-800 dark:text-white ml-auto">{{ (plant.energyCost * 0.8 / 1000).toFixed(1) }}k kWh</span>
+          </div>
+          
+          <!-- Energy Cost -->
+          <div class="flex items-center gap-1.5 sm:gap-2">
+            <svg class="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 dark:text-blue-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <span class="text-xs text-gray-600 dark:text-gray-400 whitespace-nowrap">Energy Cost:</span>
+            <span class="text-xs sm:text-sm font-bold text-blue-600 dark:text-blue-400 ml-auto">${{ (plant.energyCost * 0.3 / 1000).toFixed(1) }}k</span>
+          </div>
+          
+          <!-- Opportunity Cost -->
+          <div class="flex items-center gap-1.5 sm:gap-2">
+            <svg class="w-4 h-4 sm:w-5 sm:h-5 text-purple-600 dark:text-purple-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+            </svg>
+            <span class="text-xs text-gray-600 dark:text-gray-400 whitespace-nowrap">Opportunity Cost:</span>
+            <span class="text-xs sm:text-sm font-bold text-purple-600 dark:text-purple-400 ml-auto">${{ (plant.opportunityCost * 0.4 / 1000).toFixed(1) }}k</span>
+          </div>
+          
+          <!-- Part Count -->
+          <div class="flex items-center gap-1.5 sm:gap-2">
+            <svg class="w-4 h-4 sm:w-5 sm:h-5 text-teal-600 dark:text-teal-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+            <span class="text-xs text-gray-600 dark:text-gray-400 whitespace-nowrap">Part Count:</span>
+            <span class="text-xs sm:text-sm font-bold text-teal-600 dark:text-teal-400 ml-auto">{{ selectedZone.totalPartsProduced }}</span>
+          </div>
+        </div>
       </div>
-      <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-2.5 sm:p-3 border border-gray-200 dark:border-gray-700">
-        <h3 class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Quality</h3>
-        <p class="text-xl sm:text-2xl font-bold text-purple-600 dark:text-purple-400">{{ selectedZone.quality }}%</p>
+      
+      <!-- Third 50%: Chart Toggle Card -->
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-3 sm:p-4 border border-gray-200 dark:border-gray-700">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0 mb-2 sm:mb-3">
+          <h3 class="text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300">
+            {{ zoneChartToggle === 'oee' ? 'OEE Comparison' : 'Hourly Part Count' }}
+          </h3>
+          <button 
+            (click)="toggleZoneChart()"
+            class="w-full sm:w-auto px-2 sm:px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-300 
+                   bg-teal-600 hover:bg-teal-700 text-white shadow-sm hover:shadow-md
+                   focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2">
+            {{ zoneChartToggle === 'oee' ? 'Show Part Count' : 'Show OEE' }}
+          </button>
+        </div>
+        
+        <div class="h-[140px] sm:h-[180px]">
+          <!-- OEE Comparison Chart -->
+          <div *ngIf="zoneChartToggle === 'oee' && isClient" echarts [options]="getZoneOeeComparisonChartOption()" class="w-full h-full"></div>
+          
+          <!-- Hourly Part Count Chart -->
+          <div *ngIf="zoneChartToggle === 'hourly' && isClient" echarts [options]="getZoneHourlyPartCountChartOption()" class="w-full h-full"></div>
+        </div>
       </div>
-      <div class="bg-gradient-to-br from-teal-500 to-teal-600 rounded-lg shadow p-2.5 sm:p-3 border border-teal-400 dark:border-teal-700">
-        <h3 class="text-xs font-medium text-white mb-1">OEE</h3>
-        <p class="text-xl sm:text-2xl font-bold text-white">{{ selectedZone.oee }}%</p>
-      </div>
+      
     </div>
 
     <!-- Machine Status Filter -->
@@ -459,60 +625,55 @@
       <div class="flex flex-col sm:flex-row sm:items-center gap-2">
         <label class="text-xs font-medium text-gray-700 dark:text-gray-300">Filter by Status:</label>
         <div class="flex flex-wrap gap-1.5 sm:gap-2">
+          <!-- All Button -->
           <button 
-            (click)="machineStatusFilter = 'all'" 
-            [class.bg-teal-600]="machineStatusFilter === 'all'"
-            [class.text-white]="machineStatusFilter === 'all'"
-            [class.bg-gray-200]="machineStatusFilter !== 'all'"
-            [class.dark:bg-gray-700]="machineStatusFilter !== 'all'"
-            [class.text-gray-700]="machineStatusFilter !== 'all'"
-            [class.dark:text-gray-300]="machineStatusFilter !== 'all'"
+            (click)="machineStatusFilter = 'all'"
+            [ngClass]="{
+              'bg-teal-600 text-white border-2 border-teal-600': machineStatusFilter === 'all',
+              'bg-gray-200 dark:bg-gray-700 text-black border-2 border-teal-600': machineStatusFilter !== 'all'
+            }"
             class="px-2 py-1 text-xs rounded transition-colors">
             All
           </button>
+          <!-- Running Button -->
           <button 
-            (click)="machineStatusFilter = 'running'" 
-            [class.bg-green-600]="machineStatusFilter === 'running'"
-            [class.text-white]="machineStatusFilter === 'running'"
-            [class.bg-gray-200]="machineStatusFilter !== 'running'"
-            [class.dark:bg-gray-700]="machineStatusFilter !== 'running'"
-            [class.text-gray-700]="machineStatusFilter !== 'running'"
-            [class.dark:text-gray-300]="machineStatusFilter !== 'running'"
+            (click)="machineStatusFilter = 'running'"
+            [ngClass]="{
+              'bg-green-600 text-white border-2 border-green-600': machineStatusFilter === 'running' || machineStatusFilter === 'all',
+              'bg-gray-200 dark:bg-gray-700 text-black border-2 border-green-600': machineStatusFilter !== 'all' && machineStatusFilter !== 'running'
+            }"
             class="px-2 py-1 text-xs rounded transition-colors">
             Running
           </button>
+          <!-- Idle Button -->
           <button 
-            (click)="machineStatusFilter = 'idle'" 
-            [class.bg-yellow-600]="machineStatusFilter === 'idle'"
-            [class.text-white]="machineStatusFilter === 'idle'"
-            [class.bg-gray-200]="machineStatusFilter !== 'idle'"
-            [class.dark:bg-gray-700]="machineStatusFilter !== 'idle'"
-            [class.text-gray-700]="machineStatusFilter !== 'idle'"
-            [class.dark:text-gray-300]="machineStatusFilter !== 'idle'"
+            (click)="machineStatusFilter = 'idle'"
+            [ngClass]="{
+              'bg-yellow-600 text-white border-2 border-yellow-600': machineStatusFilter === 'idle' || machineStatusFilter === 'all',
+              'bg-gray-200 dark:bg-gray-700 text-black border-2 border-yellow-600': machineStatusFilter !== 'all' && machineStatusFilter !== 'idle'
+            }"
             class="px-2 py-1 text-xs rounded transition-colors">
             Idle
           </button>
+          <!-- Offline Button -->
           <button 
-            (click)="machineStatusFilter = 'offline'" 
-            [class.bg-gray-600]="machineStatusFilter === 'offline'"
-            [class.text-white]="machineStatusFilter === 'offline'"
-            [class.bg-gray-200]="machineStatusFilter !== 'offline'"
-            [class.dark:bg-gray-700]="machineStatusFilter !== 'offline'"
-            [class.text-gray-700]="machineStatusFilter !== 'offline'"
-            [class.dark:text-gray-300]="machineStatusFilter !== 'offline'"
+            (click)="machineStatusFilter = 'offline'"
+            [ngClass]="{
+              'bg-gray-600 text-white border-2 border-gray-600': machineStatusFilter === 'offline' || machineStatusFilter === 'all',
+              'bg-gray-200 dark:bg-gray-700 text-black border-2 border-gray-600': machineStatusFilter !== 'all' && machineStatusFilter !== 'offline'
+            }"
             class="px-2 py-1 text-xs rounded transition-colors">
             Offline
           </button>
+          <!-- Breakdown Button -->
           <button 
-            (click)="machineStatusFilter = 'maintenance'" 
-            [class.bg-red-600]="machineStatusFilter === 'maintenance'"
-            [class.text-white]="machineStatusFilter === 'maintenance'"
-            [class.bg-gray-200]="machineStatusFilter !== 'maintenance'"
-            [class.dark:bg-gray-700]="machineStatusFilter !== 'maintenance'"
-            [class.text-gray-700]="machineStatusFilter !== 'maintenance'"
-            [class.dark:text-gray-300]="machineStatusFilter !== 'maintenance'"
+            (click)="machineStatusFilter = 'breakdown'"
+            [ngClass]="{
+              'bg-red-600 text-white border-2 border-red-600': machineStatusFilter === 'breakdown' || machineStatusFilter === 'all',
+              'bg-gray-200 dark:bg-gray-700 text-black border-2 border-red-600': machineStatusFilter !== 'all' && machineStatusFilter !== 'breakdown'
+            }"
             class="px-2 py-1 text-xs rounded transition-colors">
-            Maintenance
+            Breakdown
           </button>
         </div>
       </div>
