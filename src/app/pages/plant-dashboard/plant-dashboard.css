@@ -1,3 +1,19 @@
+/* Marquee animation pause/resume */
+.critical-machines-train {
+  animation: marquee-rtl 20s linear infinite;
+  will-change: transform;
+}
+.critical-machines-train.paused {
+  animation-play-state: paused;
+}
+@keyframes marquee-rtl {
+  0% {
+    transform: translateX(100%);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
 .page-transition {
   animation: fadeIn 0.3s ease-in;
 }
@@ -29,4 +45,190 @@ div[echarts] {
   .grid {
     gap: 0.75rem;
   }
+}
+
+/* Custom scrollbar styles */
+.scrollbar-thin {
+  scrollbar-width: thin;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  height: 4px;
+  width: 4px;
+}
+
+.scrollbar-thumb-gray-300::-webkit-scrollbar-thumb {
+  background-color: #d1d5db;
+  border-radius: 2px;
+}
+
+.dark .scrollbar-thumb-gray-600::-webkit-scrollbar-thumb {
+  background-color: #4b5563;
+  border-radius: 2px;
+}
+
+.scrollbar-track-transparent::-webkit-scrollbar-track {
+  background-color: transparent;
+}
+
+/* Smooth scroll behavior */
+.overflow-x-auto {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Critical Machines Train Animation */
+.critical-machines-train {
+  display: inline-flex;
+  white-space: nowrap;
+  animation: train-scroll 13s linear infinite;
+  will-change: transform;
+}
+
+@keyframes train-scroll {
+  0% {
+    transform: translateX(400%);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+/* Smooth transitions for carousel */
+.transition-transform {
+  transition-property: transform;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Slide in from right animation */
+.animate-slide-in-right {
+  animation: slideInRight 0.5s ease-out forwards;
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Zone dropdown collapse/expand animation */
+.zone-dropdown-container {
+  transition: all 0.3s ease-in-out;
+}
+
+/* Blink animation for status indicators */
+@keyframes blink {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+
+.animate-blink {
+  animation: blink 2s ease-in-out infinite;
+}
+
+/* Pulse animation for live indicator */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Blinking animation for status dots */
+@keyframes blink {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.2;
+  }
+}
+
+.animate-blink {
+  animation: blink 1.5s ease-in-out infinite;
+}
+
+/* Enhance highlight cards appearance */
+.highlight-card-enter {
+  animation: slideInRight 0.5s ease-out;
+  will-change: opacity, transform;
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Responsive adjustments for ticker */
+@media (max-width: 768px) {
+  .ticker-content.ticker-active {
+    animation-duration: 8s;
+  }
+}
+
+@media (min-width: 1024px) {
+  .ticker-content.ticker-active {
+    animation-duration: 10s;
+  }
+}
+
+/* Add subtle gradient overlay for attention-grabbing effect */
+.highlight-gradient-overlay {
+  position: relative;
+}
+
+.highlight-gradient-overlay::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(20, 184, 166, 0.05) 0%, rgba(59, 130, 246, 0.05) 100%);
+  border-radius: 0.5rem;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.highlight-gradient-overlay:hover::before {
+  opacity: 1;
+}
+
+/* Ring animation for current highlight */
+@keyframes ringPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(20, 184, 166, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 6px rgba(20, 184, 166, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(20, 184, 166, 0);
+  }
+}
+
+.ring-2.ring-teal-400 {
+  animation: ringPulse 2s infinite;
 }

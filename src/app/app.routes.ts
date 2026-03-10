@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { LoginComponent } from './components/login/login';
 import { DashboardComponent } from './components/dashboard/dashboard';
+import { PlantsOverviewComponent } from './pages/plants-overview/plants-overview';
 import { PlantDashboard } from './pages/plant-dashboard/plant-dashboard';
 import { AnalyticsComponent } from './pages/analytics/analytics';
 import { PreventiveSchedulingComponent } from './pages/preventive-scheduling/preventive-scheduling';
@@ -14,14 +15,14 @@ export const routes: Routes = [
     path: 'dashboard',
     component: DashboardComponent,
     children: [
-      { path: '', redirectTo: 'plant', pathMatch: 'full' },
-      { path: 'plant', component: PlantDashboard },
-      { path: 'plant/:zoneName', component: PlantDashboard },
-      { path: 'plant/:zoneName/:machineName', component: PlantDashboard },
+      { path: '', component: PlantsOverviewComponent },
       { path: 'analytics', component: AnalyticsComponent },
       { path: 'preventive-scheduling', component: PreventiveSchedulingComponent },
       { path: 'configuration', component: ConfigurationComponent },
-      { path: 'energy-monitoring', component: EnergyMonitoringComponent }
+      { path: 'energy-monitoring', component: EnergyMonitoringComponent },
+      { path: ':plantId', component: PlantDashboard },
+      { path: ':plantId/:zoneName', component: PlantDashboard },
+      { path: ':plantId/:zoneName/:machineName', component: PlantDashboard }
     ]
   },
   { path: '**', redirectTo: '/login' }

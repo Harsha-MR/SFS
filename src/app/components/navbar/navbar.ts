@@ -1,7 +1,8 @@
 import { Component, OnInit, OnDestroy, ChangeDetectorRef, PLATFORM_ID, Inject } from '@angular/core';
-import { Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { Router, RouterLink, RouterLinkActive, NavigationEnd } from '@angular/router';
 import { CommonModule, isPlatformBrowser, DOCUMENT } from '@angular/common';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { UserService } from '../../services/user.service';
 
 interface MenuItem {
   label: string;
@@ -21,13 +22,16 @@ export class NavbarComponent implements OnInit, OnDestroy {
   isDarkTheme = false;
   isMenuOpen = false;
   private isBrowser: boolean;
+  showNavMenu = true;
+  private routerSubscription: any;
 
   constructor(
     private router: Router, 
     private sanitizer: DomSanitizer,
     private cdr: ChangeDetectorRef,
     @Inject(PLATFORM_ID) platformId: Object,
-    @Inject(DOCUMENT) private document: Document
+    @Inject(DOCUMENT) private document: Document,
+    private userService: UserService
   ) {
     this.isBrowser = isPlatformBrowser(platformId);
   }
@@ -51,12 +55,36 @@ export class NavbarComponent implements OnInit, OnDestroy {
       // Check time-based theme every minute (for automatic switching at 7 AM and 6 PM)
       setInterval(() => this.autoThemeCheck(), 60000);
     }
+
+    // Listen to route changes to update nav menu visibility
+    this.updateNavMenuVisibility(this.router.url);
+    this.routerSubscription = this.router.events.subscribe(event => {
+      if (event instanceof NavigationEnd) {
+        this.updateNavMenuVisibility(event.urlAfterRedirects);
+      }
+    });
   }
 
   ngOnDestroy() {
     if (this.timeInterval) {
       clearInterval(this.timeInterval);
     }
+    if (this.routerSubscription) {
+      this.routerSubscription.unsubscribe();
+    }
+  }
+
+  private updateNavMenuVisibility(url: string) {
+    // Hide nav menu if user has multiple plants and is on /dashboard (not /dashboard/plantId)
+    const isMultiPlant = this.userService.hasMultiplePlants();
+    // Remove query params/hash
+    const cleanUrl = url.split('?')[0].split('#')[0];
+    if (isMultiPlant && (cleanUrl === '/dashboard' || cleanUrl === '/dashboard/')) {
+      this.showNavMenu = false;
+    } else {
+      this.showNavMenu = true;
+    }
+    this.cdr.detectChanges();
   }
 
   getSafeHtml(html: string): SafeHtml {
@@ -67,7 +95,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     {
       label: 'Dashboard',
       icon: '<svg fill="currentColor" viewBox="0 0 24 24"><path d="M20 6h-4V4c0-1.11-.89-2-2-2h-4c-1.11 0-2 .89-2 2v2H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-6 0h-4V4h4v2z"/></svg>',
-      route: '/dashboard/plant'
+      route: '/dashboard'
     },
     {
       label: 'Analytics',
