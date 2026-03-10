@@ -100,6 +100,22 @@ div[echarts] {
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Slide in from right animation */
+.animate-slide-in-right {
+  animation: slideInRight 0.5s ease-out forwards;
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
 /* Zone dropdown collapse/expand animation */
 .zone-dropdown-container {
   transition: all 0.3s ease-in-out;
